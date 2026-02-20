@@ -10,10 +10,14 @@
  * - Custom headers/footers
  * - Configurable page settings
  * - Support for both Kitchen and Service BEOs
+ * 
+ * Architecture Note:
+ * This library no longer directly imports react-dom/server to avoid
+ * Next.js 14 Server Component conflicts. Instead, it calls the
+ * /api/pdf/render-html API route which safely handles React rendering.
  */
 
 import puppeteer, { Browser, Page, PDFOptions } from 'puppeteer';
-import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
 // PDF Generation Configuration
@@ -53,6 +57,7 @@ export interface PDFGenerationResult {
     generatedAt: string;
     pageCount?: number;
     fileSize?: number;
+    generationTime?: string;
   };
 }
 
@@ -75,228 +80,89 @@ const DEFAULT_PDF_CONFIG: PDFConfig = {
 };
 
 /**
- * Patina Design System CSS - Optimized for PDF
- * Based on banquet-blueprint styling reference
+ * Generate HTML from React component using the render API route
+ * 
+ * This function calls the /api/pdf/render-html endpoint which safely
+ * uses react-dom/server without causing Next.js 14 build issues.
  */
-const PATINA_PRINT_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@400;500;600&display=swap');
+async function generateHTML(
+  componentType: 'kitchen' | 'service',
+  componentData: any,
+  customStyles?: string
+): Promise<string> {
+  // Determine the base URL for the API call
+  // In production, use the full domain; in development, use localhost
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    box-sizing: border-box;
-  }
+  const apiUrl = `${baseUrl}/api/pdf/render-html`;
 
-  body {
-    font-family: 'Montserrat', system-ui, sans-serif;
-    font-size: 11pt;
-    line-height: 1.6;
-    color: #000;
-    background: #fff;
-    margin: 0;
-    padding: 0;
-  }
+  console.log(`[PDF Generator] Calling HTML renderer API at ${apiUrl}`);
 
-  /* Typography */
-  .font-serif {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-  }
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: componentType,
+        data: componentData,
+        styles: customStyles,
+      }),
+    });
 
-  .font-sans {
-    font-family: 'Montserrat', system-ui, sans-serif;
-  }
-
-  h1, h2, h3, h4 {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    margin: 0;
-    page-break-after: avoid;
-  }
-
-  h1 { font-size: 28pt; line-height: 1.2; }
-  h2 { font-size: 22pt; line-height: 1.3; }
-  h3 { font-size: 18pt; line-height: 1.3; }
-
-  /* Utility Classes */
-  .text-xs { font-size: 10pt; }
-  .text-sm { font-size: 11pt; }
-  .text-base { font-size: 12pt; }
-  .text-lg { font-size: 14pt; }
-  .text-xl { font-size: 16pt; }
-  .text-2xl { font-size: 18pt; }
-  .text-3xl { font-size: 22pt; }
-  .text-4xl { font-size: 26pt; }
-  .text-5xl { font-size: 32pt; }
-
-  .uppercase { text-transform: uppercase; }
-  .tracking-wider { letter-spacing: 0.15em; }
-  .tracking-widest { letter-spacing: 0.2em; }
-
-  .font-light { font-weight: 300; }
-  .font-medium { font-weight: 500; }
-  .font-semibold { font-weight: 600; }
-  .font-bold { font-weight: 700; }
-
-  /* Colors */
-  .text-foreground { color: #000; }
-  .text-background { color: #fff; }
-  .text-muted-foreground { color: #333; }
-  .bg-foreground { background-color: #000; }
-  .bg-background { background-color: #fff; }
-  .border-foreground { border-color: #000; }
-
-  /* Spacing */
-  .space-y-4 > * + * { margin-top: 1rem; }
-  .space-y-6 > * + * { margin-top: 1.5rem; }
-  .space-y-8 > * + * { margin-top: 2rem; }
-  .space-y-12 > * + * { margin-top: 3rem; }
-  .space-y-16 > * + * { margin-top: 4rem; }
-
-  .p-4 { padding: 1rem; }
-  .p-6 { padding: 1.5rem; }
-  .p-8 { padding: 2rem; }
-  .px-4 { padding-left: 1rem; padding-right: 1rem; }
-  .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-
-  /* Layout */
-  .flex { display: flex; }
-  .grid { display: grid; }
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .gap-2 { gap: 0.5rem; }
-  .gap-3 { gap: 0.75rem; }
-  .gap-4 { gap: 1rem; }
-  .gap-6 { gap: 1.5rem; }
-  .gap-8 { gap: 2rem; }
-
-  /* Borders */
-  .border { border: 1px solid #000; }
-  .border-2 { border: 2px solid #000; }
-  .border-b { border-bottom: 1px solid #000; }
-  .border-l-2 { border-left: 2px solid #000; }
-  .border-l-4 { border-left: 4px solid #000; }
-
-  /* Divider */
-  .h-px {
-    height: 1px;
-    background-color: #000;
-  }
-
-  /* Page Breaks */
-  .page-break-before {
-    page-break-before: always;
-  }
-
-  .page-break-after {
-    page-break-after: always;
-  }
-
-  .page-break-inside-avoid {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  section {
-    page-break-inside: avoid;
-  }
-
-  /* Checkboxes */
-  input[type="checkbox"],
-  .checkbox {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #000;
-    background: transparent;
-    display: inline-block;
-    margin: 0;
-  }
-
-  input[type="checkbox"]:checked,
-  .checkbox.checked {
-    background: #000;
-  }
-
-  /* Tables */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    page-break-inside: avoid;
-  }
-
-  th, td {
-    padding: 0.5rem;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-
-  th {
-    font-weight: 600;
-    border-bottom: 2px solid #000;
-  }
-
-  /* Icons - Hide or replace with text */
-  svg {
-    display: none;
-  }
-
-  /* Print-specific */
-  @media print {
-    body {
-      font-size: 11pt;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `HTML rendering failed with status ${response.status}`);
     }
 
-    .print\\:hidden {
-      display: none !important;
+    const result = await response.json();
+    
+    if (!result.success || !result.html) {
+      throw new Error(result.error || 'HTML rendering failed');
     }
 
-    a {
-      color: #000;
-      text-decoration: none;
-    }
-
-    img {
-      max-width: 100%;
-      page-break-inside: avoid;
-    }
+    return result.html;
+  } catch (error) {
+    console.error('[PDF Generator] Error calling HTML renderer:', error);
+    throw new Error(
+      `Failed to generate HTML: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
-
-  /* Backgrounds */
-  .bg-red-50 { background-color: #fef2f2 !important; }
-  .bg-yellow-50 { background-color: #fefce8 !important; }
-  .border-red-600 { border-color: #dc2626 !important; }
-  .border-yellow-600 { border-color: #ca8a04 !important; }
-  .text-red-900 { color: #7f1d1d !important; }
-`;
+}
 
 /**
- * Generate HTML from React component
+ * Extract component type and data from React element
  */
-function generateHTML(
-  component: React.ReactElement,
-  customStyles?: string
-): string {
-  const markup = renderToStaticMarkup(component);
+function extractComponentInfo(component: React.ReactElement): {
+  type: 'kitchen' | 'service';
+  data: any;
+} {
+  // Get the component type name
+  const componentName = typeof component.type === 'function' 
+    ? component.type.name 
+    : 'Unknown';
+
+  // Determine type based on component name
+  let type: 'kitchen' | 'service';
+  if (componentName.includes('Kitchen')) {
+    type = 'kitchen';
+  } else if (componentName.includes('Service')) {
+    type = 'service';
+  } else {
+    throw new Error(`Unknown component type: ${componentName}`);
+  }
+
+  // Extract data from props
+  const data = (component.props as any).data;
   
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>BEO Document</title>
-      <style>
-        ${PATINA_PRINT_STYLES}
-        ${customStyles || ''}
-      </style>
-    </head>
-    <body>
-      ${markup}
-    </body>
-    </html>
-  `;
+  if (!data) {
+    throw new Error('Component is missing required "data" prop');
+  }
+
+  return { type, data };
 }
 
 /**
@@ -309,8 +175,11 @@ export async function generatePDF(
   const startTime = Date.now();
 
   try {
-    // Generate HTML from React component
-    const html = generateHTML(options.component, options.styles);
+    // Extract component info
+    const { type, data } = extractComponentInfo(options.component);
+
+    // Generate HTML from React component via API route
+    const html = await generateHTML(type, data, options.styles);
 
     // Launch Puppeteer
     browser = await puppeteer.launch({
