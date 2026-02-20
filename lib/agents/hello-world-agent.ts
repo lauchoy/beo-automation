@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   IAgent,
   AgentInput,
@@ -36,20 +37,24 @@ export enum HelloWorldAction {
 }
 
 /**
- * Hello World Agent Parameters Interface
+ * Hello World Agent Parameters Schemas
  */
-interface GreetParams {
-  name?: string;
-  language?: 'en' | 'es' | 'fr';
-}
+const GreetParamsSchema = z.object({
+  name: z.string().optional(),
+  language: z.enum(['en', 'es', 'fr']).optional(),
+});
 
-interface EchoParams {
-  message: string;
-}
+const EchoParamsSchema = z.object({
+  message: z.string(),
+});
 
-interface DelayTestParams {
-  delayMs: number;
-}
+const DelayTestParamsSchema = z.object({
+  delayMs: z.number(),
+});
+
+type GreetParams = z.infer<typeof GreetParamsSchema>;
+type EchoParams = z.infer<typeof EchoParamsSchema>;
+type DelayTestParams = z.infer<typeof DelayTestParamsSchema>;
 
 /**
  * Hello World Agent
@@ -91,26 +96,19 @@ export class HelloWorldAgent implements IAgent {
       // Action-specific validation
       switch (input.action) {
         case HelloWorldAction.ECHO:
-          if (!input.parameters?.message) {
-            throw new AgentError(
-              'Echo action requires "message" parameter',
-              AgentErrorType.VALIDATION_ERROR,
-              this.config.name
-            );
-          }
+          EchoParamsSchema.parse(input.parameters);
           break;
 
         case HelloWorldAction.DELAY_TEST:
-          if (typeof input.parameters?.delayMs !== 'number') {
-            throw new AgentError(
-              'Delay test requires "delayMs" number parameter',
-              AgentErrorType.VALIDATION_ERROR,
-              this.config.name
-            );
-          }
+          DelayTestParamsSchema.parse(input.parameters);
           break;
 
         case HelloWorldAction.GREET:
+          if (input.parameters) {
+            GreetParamsSchema.parse(input.parameters);
+          }
+          break;
+
         case HelloWorldAction.PING:
         case HelloWorldAction.ERROR_TEST:
           // No required parameters
@@ -156,11 +154,15 @@ export class HelloWorldAgent implements IAgent {
       // Route to appropriate handler based on action
       switch (input.action) {
         case HelloWorldAction.GREET:
-          result = await this.handleGreet(input.parameters as GreetParams, context);
+          const greetParams = input.parameters 
+            ? GreetParamsSchema.parse(input.parameters)
+            : {};
+          result = await this.handleGreet(greetParams, context);
           break;
 
         case HelloWorldAction.ECHO:
-          result = await this.handleEcho(input.parameters as EchoParams, context);
+          const echoParams = EchoParamsSchema.parse(input.parameters);
+          result = await this.handleEcho(echoParams, context);
           break;
 
         case HelloWorldAction.PING:
@@ -172,10 +174,8 @@ export class HelloWorldAgent implements IAgent {
           break;
 
         case HelloWorldAction.DELAY_TEST:
-          result = await this.handleDelayTest(
-            input.parameters as DelayTestParams,
-            context
-          );
+          const delayParams = DelayTestParamsSchema.parse(input.parameters);
+          result = await this.handleDelayTest(delayParams, context);
           break;
 
         default:
