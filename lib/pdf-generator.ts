@@ -1,111 +1,317 @@
 /**
  * PDF Generation Utility for BEO Templates
  * 
- * This module provides functionality to convert React/TSX BEO templates
- * to professional PDFs using Puppeteer, maintaining all print-optimized
- * styling from the blueprint repository.
+ * Converts React/TSX BEO templates to professional PDF documents
+ * using Puppeteer with optimized print styling from banquet-blueprint.
+ * 
+ * Features:
+ * - High-quality PDF generation
+ * - Maintains print-optimized styling
+ * - Custom headers/footers
+ * - Configurable page settings
+ * - Support for both Kitchen and Service BEOs
  */
 
-import puppeteer, { Browser, PDFOptions } from 'puppeteer';
-import { renderToString } from 'react-dom/server';
+import puppeteer, { Browser, Page, PDFOptions } from 'puppeteer';
+import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
-export interface PDFGenerationOptions {
-  /** Page format (default: 'A4') */
-  format?: 'A4' | 'Letter' | 'Legal' | 'Tabloid';
-  /** Page orientation (default: 'portrait') */
+// PDF Generation Configuration
+export interface PDFConfig {
+  format?: 'A4' | 'Letter' | 'Legal';
   orientation?: 'portrait' | 'landscape';
-  /** Show header/footer (default: false) */
-  displayHeaderFooter?: boolean;
-  /** Header template HTML */
-  headerTemplate?: string;
-  /** Footer template HTML */
-  footerTemplate?: string;
-  /** Page margins in inches (default: 0.5in all sides) */
   margin?: {
     top?: string;
     right?: string;
     bottom?: string;
     left?: string;
   };
-  /** Print background graphics (default: true) */
   printBackground?: boolean;
-  /** Scale of the webpage rendering (default: 1) */
+  displayHeaderFooter?: boolean;
+  headerTemplate?: string;
+  footerTemplate?: string;
   scale?: number;
-  /** Paper width (overrides format) */
-  width?: string;
-  /** Paper height (overrides format) */
-  height?: string;
-  /** Wait for network idle before generating PDF */
-  waitForNetworkIdle?: boolean;
-  /** Custom CSS to inject */
-  customCSS?: string;
+  preferCSSPageSize?: boolean;
 }
 
+// PDF Generation Options
+export interface GeneratePDFOptions {
+  component: React.ReactElement;
+  config?: PDFConfig;
+  styles?: string;
+  filename?: string;
+  outputPath?: string;
+}
+
+// PDF Generation Result
 export interface PDFGenerationResult {
   success: boolean;
   buffer?: Buffer;
+  filePath?: string;
   error?: string;
-  metadata?: {
-    pages: number;
-    fileSize: number;
-    generationTime: number;
+  metadata: {
+    generatedAt: string;
+    pageCount?: number;
+    fileSize?: number;
   };
 }
 
 /**
- * Generate PDF from a React component
+ * Default PDF configuration optimized for BEO documents
  */
-export async function generatePDFFromComponent(
-  component: React.ReactElement,
-  options: PDFGenerationOptions = {}
-): Promise<PDFGenerationResult> {
-  const startTime = Date.now();
-  let browser: Browser | null = null;
+const DEFAULT_PDF_CONFIG: PDFConfig = {
+  format: 'A4',
+  orientation: 'portrait',
+  margin: {
+    top: '0.5in',
+    right: '0.5in',
+    bottom: '0.5in',
+    left: '0.5in',
+  },
+  printBackground: true,
+  displayHeaderFooter: false,
+  scale: 1,
+  preferCSSPageSize: false,
+};
 
-  try {
-    // Render React component to HTML string
-    const htmlContent = renderToString(component);
+/**
+ * Patina Design System CSS - Optimized for PDF
+ * Based on banquet-blueprint styling reference
+ */
+const PATINA_PRINT_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@400;500;600&display=swap');
 
-    // Generate PDF from HTML
-    const result = await generatePDFFromHTML(htmlContent, options);
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box;
+  }
 
-    return {
-      ...result,
-      metadata: {
-        ...result.metadata,
-        generationTime: Date.now() - startTime,
-      } as PDFGenerationResult['metadata'],
-    };
-  } catch (error) {
-    console.error('[PDF Generator] Error generating PDF from component:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      metadata: {
-        pages: 0,
-        fileSize: 0,
-        generationTime: Date.now() - startTime,
-      },
-    };
-  } finally {
-    if (browser) {
-      await browser.close();
+  body {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #000;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Typography */
+  .font-serif {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-sans {
+    font-family: 'Montserrat', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin: 0;
+    page-break-after: avoid;
+  }
+
+  h1 { font-size: 28pt; line-height: 1.2; }
+  h2 { font-size: 22pt; line-height: 1.3; }
+  h3 { font-size: 18pt; line-height: 1.3; }
+
+  /* Utility Classes */
+  .text-xs { font-size: 10pt; }
+  .text-sm { font-size: 11pt; }
+  .text-base { font-size: 12pt; }
+  .text-lg { font-size: 14pt; }
+  .text-xl { font-size: 16pt; }
+  .text-2xl { font-size: 18pt; }
+  .text-3xl { font-size: 22pt; }
+  .text-4xl { font-size: 26pt; }
+  .text-5xl { font-size: 32pt; }
+
+  .uppercase { text-transform: uppercase; }
+  .tracking-wider { letter-spacing: 0.15em; }
+  .tracking-widest { letter-spacing: 0.2em; }
+
+  .font-light { font-weight: 300; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+
+  /* Colors */
+  .text-foreground { color: #000; }
+  .text-background { color: #fff; }
+  .text-muted-foreground { color: #333; }
+  .bg-foreground { background-color: #000; }
+  .bg-background { background-color: #fff; }
+  .border-foreground { border-color: #000; }
+
+  /* Spacing */
+  .space-y-4 > * + * { margin-top: 1rem; }
+  .space-y-6 > * + * { margin-top: 1.5rem; }
+  .space-y-8 > * + * { margin-top: 2rem; }
+  .space-y-12 > * + * { margin-top: 3rem; }
+  .space-y-16 > * + * { margin-top: 4rem; }
+
+  .p-4 { padding: 1rem; }
+  .p-6 { padding: 1.5rem; }
+  .p-8 { padding: 2rem; }
+  .px-4 { padding-left: 1rem; padding-right: 1rem; }
+  .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+
+  /* Layout */
+  .flex { display: flex; }
+  .grid { display: grid; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: 0.5rem; }
+  .gap-3 { gap: 0.75rem; }
+  .gap-4 { gap: 1rem; }
+  .gap-6 { gap: 1.5rem; }
+  .gap-8 { gap: 2rem; }
+
+  /* Borders */
+  .border { border: 1px solid #000; }
+  .border-2 { border: 2px solid #000; }
+  .border-b { border-bottom: 1px solid #000; }
+  .border-l-2 { border-left: 2px solid #000; }
+  .border-l-4 { border-left: 4px solid #000; }
+
+  /* Divider */
+  .h-px {
+    height: 1px;
+    background-color: #000;
+  }
+
+  /* Page Breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  section {
+    page-break-inside: avoid;
+  }
+
+  /* Checkboxes */
+  input[type="checkbox"],
+  .checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #000;
+    background: transparent;
+    display: inline-block;
+    margin: 0;
+  }
+
+  input[type="checkbox"]:checked,
+  .checkbox.checked {
+    background: #000;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    font-weight: 600;
+    border-bottom: 2px solid #000;
+  }
+
+  /* Icons - Hide or replace with text */
+  svg {
+    display: none;
+  }
+
+  /* Print-specific */
+  @media print {
+    body {
+      font-size: 11pt;
+    }
+
+    .print\\:hidden {
+      display: none !important;
+    }
+
+    a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      page-break-inside: avoid;
     }
   }
+
+  /* Backgrounds */
+  .bg-red-50 { background-color: #fef2f2 !important; }
+  .bg-yellow-50 { background-color: #fefce8 !important; }
+  .border-red-600 { border-color: #dc2626 !important; }
+  .border-yellow-600 { border-color: #ca8a04 !important; }
+  .text-red-900 { color: #7f1d1d !important; }
+`;
+
+/**
+ * Generate HTML from React component
+ */
+function generateHTML(
+  component: React.ReactElement,
+  customStyles?: string
+): string {
+  const markup = renderToStaticMarkup(component);
+  
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>BEO Document</title>
+      <style>
+        ${PATINA_PRINT_STYLES}
+        ${customStyles || ''}
+      </style>
+    </head>
+    <body>
+      ${markup}
+    </body>
+    </html>
+  `;
 }
 
 /**
- * Generate PDF from HTML string
+ * Main PDF generation function
  */
-export async function generatePDFFromHTML(
-  html: string,
-  options: PDFGenerationOptions = {}
+export async function generatePDF(
+  options: GeneratePDFOptions
 ): Promise<PDFGenerationResult> {
-  const startTime = Date.now();
   let browser: Browser | null = null;
+  const startTime = Date.now();
 
   try {
+    // Generate HTML from React component
+    const html = generateHTML(options.component, options.styles);
+
     // Launch Puppeteer
     browser = await puppeteer.launch({
       headless: true,
@@ -113,98 +319,90 @@ export async function generatePDFFromHTML(
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
         '--disable-gpu',
       ],
     });
 
-    const page = await browser.newPage();
-
-    // Set viewport for consistent rendering
-    await page.setViewport({
-      width: 1200,
-      height: 1600,
-      deviceScaleFactor: 2,
-    });
-
-    // Build complete HTML document with BEO styles
-    const completeHTML = buildCompleteHTML(html, options.customCSS);
+    const page: Page = await browser.newPage();
 
     // Set content
-    await page.setContent(completeHTML, {
-      waitUntil: options.waitForNetworkIdle ? 'networkidle0' : 'domcontentloaded',
+    await page.setContent(html, {
+      waitUntil: ['networkidle0', 'domcontentloaded'],
       timeout: 30000,
     });
 
     // Wait for fonts to load
     await page.evaluateHandle('document.fonts.ready');
 
-    // Configure PDF options
-    const pdfOptions: PDFOptions = {
-      format: options.format || 'A4',
-      landscape: options.orientation === 'landscape',
-      printBackground: options.printBackground !== false,
-      displayHeaderFooter: options.displayHeaderFooter || false,
-      headerTemplate: options.headerTemplate || '',
-      footerTemplate: options.footerTemplate || '',
-      margin: {
-        top: options.margin?.top || '0.5in',
-        right: options.margin?.right || '0.5in',
-        bottom: options.margin?.bottom || '0.5in',
-        left: options.margin?.left || '0.5in',
-      },
-      scale: options.scale || 1,
-      preferCSSPageSize: false,
+    // Merge PDF config
+    const pdfConfig: PDFOptions = {
+      ...DEFAULT_PDF_CONFIG,
+      ...options.config,
     };
 
-    // Add custom dimensions if provided
-    if (options.width) {
-      pdfOptions.width = options.width;
-    }
-    if (options.height) {
-      pdfOptions.height = options.height;
-    }
-
     // Generate PDF
-    const buffer = await page.pdf(pdfOptions);
+    const pdfBuffer = await page.pdf(pdfConfig);
 
-    // Get page count (approximate)
-    const pages = await estimatePageCount(buffer);
+    await browser.close();
+    browser = null;
+
+    // Calculate metadata
+    const generationTime = Date.now() - startTime;
+    const metadata = {
+      generatedAt: new Date().toISOString(),
+      fileSize: pdfBuffer.length,
+      generationTime: `${generationTime}ms`,
+    };
 
     return {
       success: true,
-      buffer,
-      metadata: {
-        pages,
-        fileSize: buffer.length,
-        generationTime: Date.now() - startTime,
-      },
+      buffer: pdfBuffer,
+      metadata,
     };
   } catch (error) {
-    console.error('[PDF Generator] Error generating PDF:', error);
+    if (browser) {
+      await browser.close();
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
       metadata: {
-        pages: 0,
-        fileSize: 0,
-        generationTime: Date.now() - startTime,
+        generatedAt: new Date().toISOString(),
       },
     };
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
 
 /**
- * Generate PDF from URL
+ * Generate PDF and save to file
+ */
+export async function generatePDFToFile(
+  options: GeneratePDFOptions & { outputPath: string }
+): Promise<PDFGenerationResult> {
+  const result = await generatePDF(options);
+
+  if (result.success && result.buffer) {
+    const fs = await import('fs/promises');
+    await fs.writeFile(options.outputPath, result.buffer);
+
+    return {
+      ...result,
+      filePath: options.outputPath,
+    };
+  }
+
+  return result;
+}
+
+/**
+ * Generate PDF from URL (for server-side rendered pages)
  */
 export async function generatePDFFromURL(
   url: string,
-  options: PDFGenerationOptions = {}
+  config?: PDFConfig
 ): Promise<PDFGenerationResult> {
-  const startTime = Date.now();
   let browser: Browser | null = null;
 
   try {
@@ -214,334 +412,100 @@ export async function generatePDFFromURL(
     });
 
     const page = await browser.newPage();
-
     await page.goto(url, {
-      waitUntil: options.waitForNetworkIdle ? 'networkidle0' : 'domcontentloaded',
+      waitUntil: 'networkidle0',
       timeout: 30000,
     });
 
     // Wait for fonts
     await page.evaluateHandle('document.fonts.ready');
 
-    const pdfOptions: PDFOptions = {
-      format: options.format || 'A4',
-      landscape: options.orientation === 'landscape',
-      printBackground: options.printBackground !== false,
-      displayHeaderFooter: options.displayHeaderFooter || false,
-      margin: {
-        top: options.margin?.top || '0.5in',
-        right: options.margin?.right || '0.5in',
-        bottom: options.margin?.bottom || '0.5in',
-        left: options.margin?.left || '0.5in',
-      },
-      scale: options.scale || 1,
+    const pdfConfig: PDFOptions = {
+      ...DEFAULT_PDF_CONFIG,
+      ...config,
     };
 
-    const buffer = await page.pdf(pdfOptions);
-    const pages = await estimatePageCount(buffer);
+    const pdfBuffer = await page.pdf(pdfConfig);
+
+    await browser.close();
+    browser = null;
 
     return {
       success: true,
-      buffer,
+      buffer: pdfBuffer,
       metadata: {
-        pages,
-        fileSize: buffer.length,
-        generationTime: Date.now() - startTime,
+        generatedAt: new Date().toISOString(),
+        fileSize: pdfBuffer.length,
       },
     };
   } catch (error) {
-    console.error('[PDF Generator] Error generating PDF from URL:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      metadata: {
-        pages: 0,
-        fileSize: 0,
-        generationTime: Date.now() - startTime,
-      },
-    };
-  } finally {
     if (browser) {
       await browser.close();
     }
-  }
-}
 
-/**
- * Build complete HTML document with BEO styling
- */
-function buildCompleteHTML(bodyContent: string, customCSS?: string): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BEO Document</title>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <style>
-    /* Reset and Base Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    /* Patina-Inspired Design System */
-    :root {
-      --background: #ffffff;
-      --foreground: #000000;
-      --secondary: #fafaf9;
-      --muted-foreground: #666666;
-    }
-
-    body {
-      font-family: 'Montserrat', system-ui, sans-serif;
-      background-color: var(--background);
-      color: var(--foreground);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      line-height: 1.6;
-    }
-
-    /* Typography */
-    .font-serif {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-    }
-
-    .font-sans {
-      font-family: 'Montserrat', system-ui, sans-serif;
-    }
-
-    /* Patina Utilities */
-    .patina-label {
-      font-family: 'Montserrat', system-ui, sans-serif;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-    }
-
-    /* Print Optimization */
-    @page {
-      size: A4;
-      margin: 0.5in;
-    }
-
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        font-size: 11pt !important;
-      }
-
-      * {
-        animation: none !important;
-        transition: none !important;
-      }
-
-      /* Force visibility for print */
-      [class*="animate-"],
-      .patina-reveal {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-
-      /* High contrast typography */
-      body, p, span, div {
-        color: #000 !important;
-      }
-
-      .text-muted-foreground {
-        color: #333 !important;
-      }
-
-      /* Ensure backgrounds print */
-      .bg-secondary,
-      .bg-secondary\\/50 {
-        background-color: #f5f5f5 !important;
-      }
-
-      /* Border visibility */
-      .border-foreground {
-        border-color: #000 !important;
-      }
-
-      .border-foreground\\/20 {
-        border-color: rgba(0, 0, 0, 0.2) !important;
-      }
-
-      /* Page breaks */
-      section {
-        break-inside: avoid;
-      }
-
-      .h-px {
-        height: 1px !important;
-        background-color: #000 !important;
-      }
-    }
-
-    /* Tailwind-like utilities for common classes */
-    .flex { display: flex; }
-    .grid { display: grid; }
-    .hidden { display: none; }
-    .block { display: block; }
-    .space-y-4 > * + * { margin-top: 1rem; }
-    .space-y-8 > * + * { margin-top: 2rem; }
-    .space-y-12 > * + * { margin-top: 3rem; }
-    .space-y-16 > * + * { margin-top: 4rem; }
-    .gap-4 { gap: 1rem; }
-    .gap-8 { gap: 2rem; }
-    .gap-12 { gap: 3rem; }
-    .p-4 { padding: 1rem; }
-    .p-6 { padding: 1.5rem; }
-    .p-8 { padding: 2rem; }
-    .px-8 { padding-left: 2rem; padding-right: 2rem; }
-    .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mb-4 { margin-bottom: 1rem; }
-    .mt-2 { margin-top: 0.5rem; }
-    .mt-4 { margin-top: 1rem; }
-    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-    .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-    .text-5xl { font-size: 3rem; line-height: 1; }
-    .font-light { font-weight: 300; }
-    .font-medium { font-weight: 500; }
-    .font-semibold { font-weight: 600; }
-    .font-bold { font-weight: 700; }
-    .tracking-tight { letter-spacing: -0.025em; }
-    .leading-tight { line-height: 1.25; }
-    .leading-relaxed { line-height: 1.8; }
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .border { border-width: 1px; border-style: solid; }
-    .border-2 { border-width: 2px; }
-    .border-4 { border-width: 4px; }
-    .border-foreground { border-color: var(--foreground); }
-    .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
-    .border-l-2 { border-left-width: 2px; border-left-style: solid; }
-    .border-l-4 { border-left-width: 4px; border-left-style: solid; }
-    .bg-secondary { background-color: var(--secondary); }
-    .bg-foreground { background-color: var(--foreground); }
-    .text-foreground { color: var(--foreground); }
-    .text-background { color: var(--background); }
-    .text-muted-foreground { color: var(--muted-foreground); }
-    .h-16 { height: 4rem; }
-    .w-32 { width: 8rem; }
-    .h-px { height: 1px; }
-    .w-full { width: 100%; }
-    .items-center { align-items: center; }
-    .items-start { align-items: flex-start; }
-    .justify-between { justify-content: space-between; }
-    .flex-shrink-0 { flex-shrink: 0; }
-    .max-w-4xl { max-width: 56rem; }
-    .mx-auto { margin-left: auto; margin-right: auto; }
-    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    
-    ${customCSS || ''}
-  </style>
-</head>
-<body>
-  ${bodyContent}
-</body>
-</html>
-  `.trim();
-}
-
-/**
- * Estimate page count from PDF buffer
- */
-async function estimatePageCount(buffer: Buffer): Promise<number> {
-  try {
-    // Simple estimation based on PDF structure
-    // More accurate methods would require a PDF parsing library
-    const pdfString = buffer.toString('latin1');
-    const pageMatches = pdfString.match(/\/Type[\s]*\/Page[^s]/g);
-    return pageMatches ? pageMatches.length : 1;
-  } catch (error) {
-    console.warn('[PDF Generator] Could not estimate page count:', error);
-    return 1;
-  }
-}
-
-/**
- * Save PDF buffer to file (Node.js environment)
- */
-export async function savePDFToFile(
-  buffer: Buffer,
-  filepath: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const fs = await import('fs');
-    const path = await import('path');
-
-    // Ensure directory exists
-    const dir = path.dirname(filepath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Write file
-    fs.writeFileSync(filepath, buffer);
-
-    return { success: true };
-  } catch (error) {
-    console.error('[PDF Generator] Error saving PDF to file:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
+      metadata: {
+        generatedAt: new Date().toISOString(),
+      },
     };
   }
 }
 
 /**
- * Generate PDF and return as base64 string (useful for API responses)
+ * Batch PDF generation for multiple BEOs
  */
-export function bufferToBase64(buffer: Buffer): string {
-  return buffer.toString('base64');
+export async function generateBatchPDFs(
+  beos: Array<GeneratePDFOptions>
+): Promise<Array<PDFGenerationResult>> {
+  const results: Array<PDFGenerationResult> = [];
+
+  for (const beo of beos) {
+    const result = await generatePDF(beo);
+    results.push(result);
+  }
+
+  return results;
 }
 
 /**
- * Generate PDF with default BEO styling
+ * Utility: Get optimal PDF config for BEO type
  */
-export async function generateBEOPDF(
-  component: React.ReactElement,
-  filename?: string
-): Promise<PDFGenerationResult> {
-  const result = await generatePDFFromComponent(component, {
-    format: 'A4',
-    orientation: 'portrait',
-    printBackground: true,
-    margin: {
-      top: '0.5in',
-      right: '0.5in',
-      bottom: '0.5in',
-      left: '0.5in',
-    },
-    waitForNetworkIdle: true,
-  });
+export function getBEOPDFConfig(type: 'kitchen' | 'service'): PDFConfig {
+  const baseConfig = { ...DEFAULT_PDF_CONFIG };
 
-  // Optionally save to file
-  if (result.success && result.buffer && filename) {
-    await savePDFToFile(result.buffer, filename);
+  if (type === 'kitchen') {
+    return {
+      ...baseConfig,
+      headerTemplate: `
+        <div style="font-size: 8pt; text-align: center; width: 100%; padding: 0 0.5in;">
+          <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+            Kitchen Production Sheet
+          </span>
+        </div>
+      `,
+      displayHeaderFooter: true,
+    };
+  } else {
+    return {
+      ...baseConfig,
+      headerTemplate: `
+        <div style="font-size: 8pt; text-align: center; width: 100%; padding: 0 0.5in;">
+          <span style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+            Service Plan
+          </span>
+        </div>
+      `,
+      displayHeaderFooter: true,
+    };
   }
-
-  return result;
 }
 
 export default {
-  generatePDFFromComponent,
-  generatePDFFromHTML,
+  generatePDF,
+  generatePDFToFile,
   generatePDFFromURL,
-  generateBEOPDF,
-  savePDFToFile,
-  bufferToBase64,
+  generateBatchPDFs,
+  getBEOPDFConfig,
 };
