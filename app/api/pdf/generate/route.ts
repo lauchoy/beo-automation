@@ -3,15 +3,13 @@
  * 
  * POST /api/pdf/generate
  * 
- * Generates PDF documents from BEO templates.
+ * Generates PDF documents from BEO templates using template-based HTML generation.
  * Supports both Kitchen and Service BEO types.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePDF, getBEOPDFConfig } from '@/lib/pdf-generator';
-import { KitchenBEO, type KitchenBEOData } from '@/components/templates/KitchenBEO';
-import { ServiceBEO, type ServiceBEOData } from '@/components/templates/ServiceBEO';
-import React from 'react';
+import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
 
 // Request body types
 interface PDFGenerateRequest {
@@ -57,20 +55,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[PDF Generator] Generating ${body.type} BEO PDF for ${body.data.header.beoNumber}`);
-
-    // Create React component based on type
-    let component: React.ReactElement;
-    
-    if (body.type === 'kitchen') {
-      component = React.createElement(KitchenBEO, {
-        data: body.data as KitchenBEOData,
-      });
-    } else {
-      component = React.createElement(ServiceBEO, {
-        data: body.data as ServiceBEOData,
-      });
+    // Validate data has required header
+    if (!body.data.header?.beoNumber) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing required field: data.header.beoNumber',
+        },
+        { status: 400 }
+      );
     }
+
+    console.log(`[PDF Generator] Generating ${body.type} BEO PDF for ${body.data.header.beoNumber}`);
 
     // Get PDF config
     const pdfConfig = getBEOPDFConfig(body.type);
@@ -80,7 +76,8 @@ export async function POST(request: NextRequest) {
 
     // Generate PDF
     const result = await generatePDF({
-      component,
+      type: body.type,
+      data: body.data,
       config: pdfConfig,
     });
 
@@ -135,13 +132,16 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     service: 'BEO PDF Generator',
-    version: '1.0.0',
+    version: '2.0.0',
+    architecture: 'Template-based HTML Generation',
     capabilities: {
       types: ['kitchen', 'service'],
       formats: ['A4', 'Letter', 'Legal'],
       orientations: ['portrait', 'landscape'],
       features: [
-        'React component rendering',
+        'Template literal-based HTML generation',
+        'No react-dom/server dependency',
+        'Next.js 14 compatible',
         'Print-optimized styling',
         'Custom headers/footers',
         'Professional typography',
@@ -174,15 +174,7 @@ export async function GET() {
             eventTime: '6:00 PM',
             clientName: 'John Doe',
             venue: 'Grand Ballroom',
-          },
-          guests: {
-            total: 150,
-            breakdown: [
-              { type: 'Chicken', count: 80, color: 'main' },
-              { type: 'Fish', count: 50, color: 'appetizer' },
-              { type: 'Vegetarian', count: 20, color: 'dessert' },
-            ],
-            dietary: {},
+            guestCount: 150,
           },
           menu: {
             appetizers: [],
@@ -190,10 +182,23 @@ export async function GET() {
             desserts: [],
           },
           prepSchedule: [],
-          equipmentAllocation: [],
+          equipment: {
+            cooking: [],
+            prep: [],
+            service: [],
+          },
           staffAssignments: [],
         },
       },
+    },
+    improvements: {
+      'v2.0.0': [
+        'Replaced react-dom/server with template literals',
+        'Removed API route dependency for HTML rendering',
+        'Simplified architecture for better reliability',
+        'Fixed Next.js 14 compatibility issues',
+        'Improved performance by eliminating extra HTTP calls',
+      ],
     },
   });
 }

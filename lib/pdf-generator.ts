@@ -1,8 +1,8 @@
 /**
  * PDF Generation Utility for BEO Templates
  * 
- * Converts React/TSX BEO templates to professional PDF documents
- * using Puppeteer with optimized print styling from banquet-blueprint.
+ * Converts BEO data to professional PDF documents using Puppeteer
+ * with template-based HTML generation to avoid Next.js 14 compatibility issues.
  * 
  * Features:
  * - High-quality PDF generation
@@ -12,13 +12,14 @@
  * - Support for both Kitchen and Service BEOs
  * 
  * Architecture Note:
- * This library no longer directly imports react-dom/server to avoid
- * Next.js 14 Server Component conflicts. Instead, it calls the
- * /api/pdf/render-html API route which safely handles React rendering.
+ * This library uses template literal-based HTML generation instead of
+ * react-dom/server to ensure compatibility with Next.js 14 Server Components.
  */
 
 import puppeteer, { Browser, Page, PDFOptions } from 'puppeteer';
-import React from 'react';
+import { generateKitchenBEOHTML } from './html-templates/kitchen-beo-template';
+import { generateServiceBEOHTML } from './html-templates/service-beo-template';
+import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
 
 // PDF Generation Configuration
 export interface PDFConfig {
@@ -40,9 +41,9 @@ export interface PDFConfig {
 
 // PDF Generation Options
 export interface GeneratePDFOptions {
-  component: React.ReactElement;
+  type: 'kitchen' | 'service';
+  data: KitchenBEOData | ServiceBEOData;
   config?: PDFConfig;
-  styles?: string;
   filename?: string;
   outputPath?: string;
 }
@@ -80,89 +81,26 @@ const DEFAULT_PDF_CONFIG: PDFConfig = {
 };
 
 /**
- * Generate HTML from React component using the render API route
- * 
- * This function calls the /api/pdf/render-html endpoint which safely
- * uses react-dom/server without causing Next.js 14 build issues.
+ * Generate HTML from BEO data using template generators
  */
-async function generateHTML(
-  componentType: 'kitchen' | 'service',
-  componentData: any,
-  customStyles?: string
-): Promise<string> {
-  // Determine the base URL for the API call
-  // In production, use the full domain; in development, use localhost
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-  const apiUrl = `${baseUrl}/api/pdf/render-html`;
-
-  console.log(`[PDF Generator] Calling HTML renderer API at ${apiUrl}`);
+function generateHTML(
+  type: 'kitchen' | 'service',
+  data: KitchenBEOData | ServiceBEOData
+): string {
+  console.log(`[PDF Generator] Generating HTML for ${type} BEO`);
 
   try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: componentType,
-        data: componentData,
-        styles: customStyles,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || `HTML rendering failed with status ${response.status}`);
+    if (type === 'kitchen') {
+      return generateKitchenBEOHTML(data as KitchenBEOData);
+    } else {
+      return generateServiceBEOHTML(data as ServiceBEOData);
     }
-
-    const result = await response.json();
-    
-    if (!result.success || !result.html) {
-      throw new Error(result.error || 'HTML rendering failed');
-    }
-
-    return result.html;
   } catch (error) {
-    console.error('[PDF Generator] Error calling HTML renderer:', error);
+    console.error('[PDF Generator] Error generating HTML:', error);
     throw new Error(
       `Failed to generate HTML: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   }
-}
-
-/**
- * Extract component type and data from React element
- */
-function extractComponentInfo(component: React.ReactElement): {
-  type: 'kitchen' | 'service';
-  data: any;
-} {
-  // Get the component type name
-  const componentName = typeof component.type === 'function' 
-    ? component.type.name 
-    : 'Unknown';
-
-  // Determine type based on component name
-  let type: 'kitchen' | 'service';
-  if (componentName.includes('Kitchen')) {
-    type = 'kitchen';
-  } else if (componentName.includes('Service')) {
-    type = 'service';
-  } else {
-    throw new Error(`Unknown component type: ${componentName}`);
-  }
-
-  // Extract data from props
-  const data = (component.props as any).data;
-  
-  if (!data) {
-    throw new Error('Component is missing required "data" prop');
-  }
-
-  return { type, data };
 }
 
 /**
@@ -175,11 +113,8 @@ export async function generatePDF(
   const startTime = Date.now();
 
   try {
-    // Extract component info
-    const { type, data } = extractComponentInfo(options.component);
-
-    // Generate HTML from React component via API route
-    const html = await generateHTML(type, data, options.styles);
+    // Generate HTML from BEO data
+    const html = generateHTML(options.type, options.data);
 
     // Launch Puppeteer
     browser = await puppeteer.launch({
