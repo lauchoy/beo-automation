@@ -5,13 +5,14 @@
  * 
  * Generates PDF documents from BEO templates.
  * Supports both Kitchen and Service BEO types.
+ * 
+ * Now uses template-based HTML generation (no React rendering)
+ * for full Next.js 14 and Vercel compatibility.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePDF, getBEOPDFConfig } from '@/lib/pdf-generator';
-import { KitchenBEO, type KitchenBEOData } from '@/components/templates/KitchenBEO';
-import { ServiceBEO, type ServiceBEOData } from '@/components/templates/ServiceBEO';
-import React from 'react';
+import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
 
 // Request body types
 interface PDFGenerateRequest {
@@ -59,28 +60,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`[PDF Generator] Generating ${body.type} BEO PDF for ${body.data.header.beoNumber}`);
 
-    // Create React component based on type
-    let component: React.ReactElement;
-    
-    if (body.type === 'kitchen') {
-      component = React.createElement(KitchenBEO, {
-        data: body.data as KitchenBEOData,
-      });
-    } else {
-      component = React.createElement(ServiceBEO, {
-        data: body.data as ServiceBEOData,
-      });
-    }
-
     // Get PDF config
     const pdfConfig = getBEOPDFConfig(body.type);
     if (body.config) {
       Object.assign(pdfConfig, body.config);
     }
 
-    // Generate PDF
+    // Generate PDF using template-based approach
     const result = await generatePDF({
-      component,
+      type: body.type,
+      data: body.data,
       config: pdfConfig,
     });
 
@@ -135,13 +124,15 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     service: 'BEO PDF Generator',
-    version: '1.0.0',
+    version: '2.0.0',
+    architecture: 'Template-based (No React rendering)',
+    compatibility: 'Next.js 14 + Vercel',
     capabilities: {
       types: ['kitchen', 'service'],
       formats: ['A4', 'Letter', 'Legal'],
       orientations: ['portrait', 'landscape'],
       features: [
-        'React component rendering',
+        'Template-based HTML generation',
         'Print-optimized styling',
         'Custom headers/footers',
         'Professional typography',
@@ -149,6 +140,7 @@ export async function GET() {
         'Timeline visualization',
         'Staff assignments',
         'Equipment lists',
+        'Full Vercel compatibility',
       ],
     },
     usage: {
@@ -162,36 +154,6 @@ export async function GET() {
         config: {
           format: 'optional A4 | Letter | Legal',
           orientation: 'optional portrait | landscape',
-        },
-      },
-      example: {
-        type: 'kitchen',
-        data: {
-          header: {
-            beoNumber: 'BEO-2024-001',
-            eventName: 'Sample Event',
-            eventDate: 'March 15, 2024',
-            eventTime: '6:00 PM',
-            clientName: 'John Doe',
-            venue: 'Grand Ballroom',
-          },
-          guests: {
-            total: 150,
-            breakdown: [
-              { type: 'Chicken', count: 80, color: 'main' },
-              { type: 'Fish', count: 50, color: 'appetizer' },
-              { type: 'Vegetarian', count: 20, color: 'dessert' },
-            ],
-            dietary: {},
-          },
-          menu: {
-            appetizers: [],
-            mains: [],
-            desserts: [],
-          },
-          prepSchedule: [],
-          equipmentAllocation: [],
-          staffAssignments: [],
         },
       },
     },
