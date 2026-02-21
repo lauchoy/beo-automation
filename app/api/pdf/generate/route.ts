@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     console.log(`[PDF Generator] Successfully generated ${filename} in ${totalTime}ms`);
 
     // Return PDF as response
-    return new NextResponse(result.buffer, {
+    return new NextResponse(new Uint8Array(result.buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
