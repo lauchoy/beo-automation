@@ -13,6 +13,22 @@ A Next.js 14 TypeScript application for automating Banquet Event Orders (BEOs) w
 - 📊 **Real-time Updates**: Track event status and progress
 - 🎨 **Modern UI**: Built with Tailwind CSS, "Patina" design system, and Lucide icons
 
+## 🔐 Security
+
+**⚠️ IMPORTANT:** Never commit credentials or API keys to version control.
+
+- **[Security Documentation](docs/SECURITY.md)** - Comprehensive security guide
+- **[Security Checklist](.github/SECURITY_CHECKLIST.md)** - Quick reference for security tasks
+- **[Issue #9](https://github.com/lauchoy/beo-automation/issues/9)** - Active credential rotation tracking
+
+### Quick Security Tips
+
+1. ✅ Always use `.env.local` for local development (never commit it)
+2. ✅ Store production secrets in Doppler and deployment platform
+3. ✅ Review `.env.example` - it contains only placeholder values
+4. ⚠️ Be cautious with `NEXT_PUBLIC_*` variables (exposed to browser)
+5. 🔄 Rotate credentials every 90 days or immediately if exposed
+
 ## 🆕 New: BEO Templates & PDF Generation
 
 Professional, print-optimized BEO templates based on the banquet-blueprint styling reference:
@@ -49,9 +65,10 @@ cd beo-automation
 # Install dependencies
 npm install
 
-# Configure environment
+# Configure environment (IMPORTANT: Never commit .env.local!)
 cp .env.example .env.local
-# Edit .env.local with your credentials
+# Edit .env.local with your REAL credentials
+# The .env.example file contains only PLACEHOLDER values
 
 # Start development server
 npm run dev
@@ -77,11 +94,17 @@ curl -X POST http://localhost:3000/api/beo/generate-pdf \
 
 ## 📚 Documentation
 
+### Core Documentation
 - **[BEO Quick Start](docs/BEO_QUICK_START.md)** - Get started in 5 minutes
 - **[BEO Templates Guide](docs/BEO_TEMPLATES_GUIDE.md)** - Complete implementation guide
 - **[BEO Implementation Summary](docs/BEO_TEMPLATES_IMPLEMENTATION.md)** - Technical details
 - **[Agent Orchestration](lib/agents/README.md)** - Agent system documentation
 - **[Template README](components/templates/README.md)** - Template usage guide
+
+### Security & Operations
+- **[Security Documentation](docs/SECURITY.md)** - 🔐 Credential management & best practices
+- **[Security Checklist](.github/SECURITY_CHECKLIST.md)** - Quick reference
+- **[Deployment Guide](DEPLOYMENT_FIX_QUICKSTART.md)** - Vercel deployment
 
 ## 🛠️ Tech Stack
 
@@ -99,6 +122,8 @@ curl -X POST http://localhost:3000/api/beo/generate-pdf \
 
 ```
 beo-automation/
+├── .github/
+│   └── SECURITY_CHECKLIST.md # Security quick reference
 ├── app/
 │   ├── api/
 │   │   ├── agents/          # Agent orchestration endpoints
@@ -123,6 +148,9 @@ beo-automation/
 │   ├── BEOList.tsx          # BEO listing
 │   ├── RecipeLibrary.tsx    # Recipe browser
 │   └── WorkflowManager.tsx  # Workflow management
+├── docs/
+│   ├── SECURITY.md          # 🔐 Security documentation
+│   └── ...                  # Other documentation
 ├── lib/
 │   ├── agents/              # Agent orchestration system
 │   ├── pdf-generator.ts     # PDF generation (NEW)
@@ -132,7 +160,8 @@ beo-automation/
 │   └── utils.ts             # Utilities
 ├── scripts/
 │   └── test-pdf-generation.ts # PDF test script (NEW)
-├── docs/                    # Documentation (NEW)
+├── .env.example             # ⚠️ PLACEHOLDER values only!
+├── .gitignore               # Protects .env files
 └── package.json
 ```
 
@@ -253,12 +282,19 @@ The BEO templates use a sophisticated design system:
 - **AWS Amplify**: Enterprise-grade hosting
 
 ### Environment Variables for Production
-Ensure all environment variables are set:
-- `AIRTABLE_TOKEN`
-- `AIRTABLE_BASE_ID`
-- `DOPPLER_TOKEN`
-- `WARP_API_KEY`
-- `ENVIRONMENT_ID`
+
+**⚠️ IMPORTANT:** Set these in your deployment platform (Vercel, Netlify, etc.) - **NEVER in code!**
+
+Required variables:
+- `AIRTABLE_TOKEN` - 🔴 Server-only (never expose to client)
+- `AIRTABLE_BASE_ID` - Can be public (it's in the code)
+- `DOPPLER_TOKEN` - 🔴 Server-only (never expose to client)
+- `WARP_API_KEY` - 🔴 Server-only (unless client needs it)
+- `OZ_ENVIRONMENT_ID` - ⚠️ Depends on usage
+- `ENVIRONMENT_ID` - Can be public
+- `NEXT_PUBLIC_*` - ⚠️ These are exposed to the browser!
+
+**See [Security Documentation](docs/SECURITY.md) for detailed configuration instructions.**
 
 ### Puppeteer in Production
 
@@ -284,13 +320,25 @@ export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 - [Agent Implementation](AGENT_IMPLEMENTATION.md) - Technical details
 - [Quick Reference](lib/agents/QUICK_REFERENCE.md) - Quick lookup
 
+### Security & Operations
+- [Security Documentation](docs/SECURITY.md) - 🔐 Comprehensive security guide
+- [Security Checklist](.github/SECURITY_CHECKLIST.md) - Quick reference
+- [Credential Rotation](docs/SECURITY.md#credential-rotation-procedure) - Step-by-step procedures
+
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. **Review security guidelines** before committing
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+**⚠️ Before submitting a PR:**
+- [ ] No credentials or API keys in code
+- [ ] All secrets use environment variables
+- [ ] `.env.local` is not committed
+- [ ] Security documentation reviewed
 
 ## 📄 License
 
@@ -304,9 +352,17 @@ For questions or issues:
 - Review component READMEs
 - Contact: Jimmy Lauchoy
 
+**For security issues:** See [Security Documentation](docs/SECURITY.md) for reporting procedures.
+
 ## 🎉 Recent Updates
 
-### February 20, 2026 - BEO Templates & PDF Generation
+### February 21, 2026 - Security Improvements
+- 🔐 Secured `.env.example` with placeholder values
+- 📚 Added comprehensive security documentation
+- ✅ Created security checklist for quick reference
+- 🚨 Created issue #9 for credential rotation tracking
+
+### February 20-21, 2026 - BEO Templates & PDF Generation
 - ✅ Added Kitchen BEO template component
 - ✅ Added Service BEO template component
 - ✅ Implemented Puppeteer-based PDF generation
@@ -328,4 +384,5 @@ For questions or issues:
 
 **Repository**: https://github.com/lauchoy/beo-automation  
 **Version**: 0.1.0  
-**Status**: Production Ready ✅
+**Status**: Production Ready ✅  
+**Security**: 🔐 Credentials secured & documented
