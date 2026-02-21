@@ -10,6 +10,7 @@ export interface KitchenBEOData {
     eventTime: string;
     clientName: string;
     venue: string;
+    guestCount: number;
     logoUrl?: string;
   };
   guests: {
@@ -236,6 +237,7 @@ const KitchenBEOHeader: React.FC<KitchenBEOData['header']> = ({
   eventTime,
   clientName,
   venue,
+  guestCount,
   logoUrl,
 }) => {
   return (
@@ -286,6 +288,12 @@ const KitchenBEOHeader: React.FC<KitchenBEOData['header']> = ({
               Venue
             </span>
             <span className="font-serif text-xl">{venue}</span>
+          </div>
+          <div>
+            <span className="text-xs uppercase tracking-wider text-muted-foreground block mb-1">
+              Guest Count
+            </span>
+            <span className="font-serif text-xl">{guestCount}</span>
           </div>
         </div>
       </div>
