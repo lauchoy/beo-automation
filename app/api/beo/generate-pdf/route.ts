@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
     // Return as downloadable file (default)
     const filename = `BEO-${data.header.beoNumber}-${type}-${Date.now()}.pdf`;
 
-    return new NextResponse(result.buffer, {
+    // Convert Buffer to Uint8Array for Next.js Response compatibility
+    return new NextResponse(new Uint8Array(result.buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
