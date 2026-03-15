@@ -5,7 +5,7 @@
  * Use for testing, development, and as a reference.
  */
 
-import { type KitchenBEOData } from '@/components/templates/KitchenBEO';
+import { type KitchenBEOData } from '@/lib/types/beo-templates';
 
 export const sampleKitchenBEO: KitchenBEOData = {
   header: {

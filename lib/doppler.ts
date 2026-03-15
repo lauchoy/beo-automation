@@ -11,6 +11,12 @@ export interface DopplerSecrets {
   environment_id: string;
 }
 
+// The @dopplerhq/node-sdk SecretsListResponse type does not expose named secret
+// keys directly, but the runtime shape is a map of secret name → { computed, raw }.
+// We cast through unknown to access the values without bypassing all type safety.
+type DopplerSecretValue = { computed: string; raw: string };
+type DopplerSecretsMap = Record<string, DopplerSecretValue>;
+
 /**
  * Fetch secrets from Doppler
  * @param project - Doppler project name
@@ -21,15 +27,13 @@ export async function getDopplerSecrets(
   config: string = 'dev'
 ): Promise<DopplerSecrets> {
   try {
-    const secrets = await doppler.secrets.list({
-      project,
-      config,
-    });
+    const secrets = await doppler.secrets.list(project, config);
+    const secretsMap = secrets as unknown as DopplerSecretsMap;
 
     return {
-      AIRTABLE_TOKEN: secrets.AIRTABLE_TOKEN?.computed || '',
-      WARP_API_KEY: secrets.WARP_API_KEY?.computed || '',
-      environment_id: secrets.environment_id?.computed || '',
+      AIRTABLE_TOKEN: secretsMap['AIRTABLE_TOKEN']?.computed || '',
+      WARP_API_KEY: secretsMap['WARP_API_KEY']?.computed || '',
+      environment_id: secretsMap['environment_id']?.computed || '',
     };
   } catch (error) {
     console.error('Error fetching Doppler secrets:', error);
@@ -46,13 +50,10 @@ export async function getDopplerSecret(
   config: string = 'dev'
 ): Promise<string> {
   try {
-    const secret = await doppler.secrets.get({
-      project,
-      config,
-      name,
-    });
+    const secret = await doppler.secrets.get(project, config, name);
+    const secretData = secret as unknown as DopplerSecretValue;
 
-    return secret.computed || '';
+    return secretData.computed || '';
   } catch (error) {
     console.error(`Error fetching secret ${name}:`, error);
     throw new Error(`Failed to fetch secret ${name} from Doppler`);

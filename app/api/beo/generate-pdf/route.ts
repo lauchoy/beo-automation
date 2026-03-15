@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePDF } from '@/lib/pdf-generator';
-import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
+import type { KitchenBEOData, ServiceBEOData } from '@/lib/types/beo-templates';
 
 /**
  * Utility function to convert buffer to base64
@@ -181,7 +181,11 @@ export async function GET() {
             eventTime: '6:00 PM - 11:00 PM',
             clientName: 'John & Jane Doe',
             venue: 'Grand Ballroom',
-            guestCount: 150,
+          },
+          guests: {
+            total: 150,
+            breakdown: [],
+            dietary: {},
           },
           menu: {
             appetizers: [],
@@ -189,11 +193,7 @@ export async function GET() {
             desserts: [],
           },
           prepSchedule: [],
-          equipment: {
-            cooking: [],
-            prep: [],
-            service: [],
-          },
+          equipmentAllocation: [],
           staffAssignments: [],
         },
         returnFormat: 'buffer',
@@ -210,15 +210,22 @@ export async function GET() {
             venue: 'Convention Center',
           },
           timeline: [],
-          staffPositions: [],
+          floorPlan: {
+            totalTables: 0,
+            totalSeats: 0,
+            layout: '',
+          },
+          staffPositioning: [],
           guestManagement: {
-            total: 200,
+            totalGuests: 0,
+            expectedArrival: '',
+            cocktailHour: false,
+            seatingStyle: 'plated',
+            specialNeeds: [],
           },
-          equipmentSetup: {
-            tables: [],
-            linens: [],
-            serviceware: [],
-          },
+          serviceFlow: [],
+          equipmentSetup: [],
+          emergencyContacts: [],
         },
         returnFormat: 'buffer',
       },
