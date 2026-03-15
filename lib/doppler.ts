@@ -21,10 +21,7 @@ export async function getDopplerSecrets(
   config: string = 'dev'
 ): Promise<DopplerSecrets> {
   try {
-    const secrets = await doppler.secrets.list({
-      project,
-      config,
-    });
+    const secrets = await doppler.secrets.list(project, config);
 
     return {
       AIRTABLE_TOKEN: secrets.AIRTABLE_TOKEN?.computed || '',
@@ -46,11 +43,7 @@ export async function getDopplerSecret(
   config: string = 'dev'
 ): Promise<string> {
   try {
-    const secret = await doppler.secrets.get({
-      project,
-      config,
-      name,
-    });
+    const secret = await doppler.secrets.get(project, config, name);
 
     return secret.computed || '';
   } catch (error) {
