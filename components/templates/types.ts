@@ -377,25 +377,3 @@ export function validateServiceBEOData(data: any): ValidationResult {
     errors: errors.length > 0 ? errors : undefined,
   };
 }
-
-// ============================================================================
-// Exports
-// ============================================================================
-
-export type {
-  // Re-export all types for convenience
-  BEOHeader,
-  AllergenType,
-  MenuItem,
-  MenuSection,
-  PrepTask,
-  Equipment,
-  StaffAssignment,
-  KitchenBEOData,
-  ServiceBEOData,
-  TimelineEvent,
-  GuestManagement,
-  ServiceCoordination,
-  PDFGenerationOptions,
-  PDFGenerationResult,
-};
