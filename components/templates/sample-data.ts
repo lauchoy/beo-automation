@@ -169,6 +169,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
       label: 'Scallops cleaned, dried, and portioned',
       station: 'Sauté',
       assignee: 'Chef Martinez',
+      priority: 'high',
       timeEstimate: '3:00 PM',
       details:
         'Remove side muscle, pat completely dry. Portion 3 per plate on parchment-lined trays.',
@@ -177,6 +178,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
       id: 'prep3',
       label: 'All vegetables prepped and blanched',
       station: 'Garde Manger',
+      priority: 'medium',
       timeEstimate: '3:30 PM',
       details: 'Asparagus, carrots, beans blanched and shocked. Fingerlings par-cooked.',
     },
