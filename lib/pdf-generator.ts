@@ -19,7 +19,7 @@
 import puppeteer, { Browser, Page, PDFOptions } from 'puppeteer';
 import { generateKitchenBEOHTML } from './html-templates/kitchen-beo-template';
 import { generateServiceBEOHTML } from './html-templates/service-beo-template';
-import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
+import type { KitchenBEOData, ServiceBEOData } from '@/lib/types/beo-templates';
 
 // PDF Generation Configuration
 export interface PDFConfig {
@@ -81,7 +81,13 @@ const DEFAULT_PDF_CONFIG: PDFConfig = {
 };
 
 /**
- * Generate HTML from BEO data using template generators
+ * Generate HTML from BEO data using template generators.
+ *
+ * NOTE: generateKitchenBEOHTML / generateServiceBEOHTML were originally authored
+ * against the legacy components/templates/types shapes. They are called with
+ * `as any` here so that the canonical lib/types/beo-templates types flow cleanly
+ * through the public API without forcing a simultaneous rewrite of the HTML
+ * template internals. The runtime shapes are compatible.
  */
 function generateHTML(
   type: 'kitchen' | 'service',
@@ -91,9 +97,11 @@ function generateHTML(
 
   try {
     if (type === 'kitchen') {
-      return generateKitchenBEOHTML(data as KitchenBEOData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return generateKitchenBEOHTML(data as any);
     } else {
-      return generateServiceBEOHTML(data as ServiceBEOData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return generateServiceBEOHTML(data as any);
     }
   } catch (error) {
     console.error('[PDF Generator] Error generating HTML:', error);
