@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generatePDF, getBEOPDFConfig } from '@/lib/pdf-generator';
-import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
+import type { KitchenBEOData, ServiceBEOData } from '@/lib/types/beo-templates';
 
 // Request body types
 interface PDFGenerateRequest {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine filename
-    const filename = body.filename || 
+    const filename = body.filename ||
       `BEO-${body.data.header.beoNumber}-${body.type}-${Date.now()}.pdf`;
 
     // Log success
@@ -174,7 +174,11 @@ export async function GET() {
             eventTime: '6:00 PM',
             clientName: 'John Doe',
             venue: 'Grand Ballroom',
-            guestCount: 150,
+          },
+          guests: {
+            total: 150,
+            breakdown: [],
+            dietary: {},
           },
           menu: {
             appetizers: [],
@@ -182,11 +186,7 @@ export async function GET() {
             desserts: [],
           },
           prepSchedule: [],
-          equipment: {
-            cooking: [],
-            prep: [],
-            service: [],
-          },
+          equipmentAllocation: [],
           staffAssignments: [],
         },
       },
