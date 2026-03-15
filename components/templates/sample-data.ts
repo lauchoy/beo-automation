@@ -19,6 +19,22 @@ export const sampleKitchenBEO: KitchenBEOData = {
     venue: 'The Conservatory at Willowbrook',
     guestCount: 150,
   },
+  // Fix 1: Add missing required `guests` block
+  guests: {
+    total: 150,
+    breakdown: [
+      { type: 'Standard',    count: 110, color: 'default' as const },
+      { type: 'Vegetarian',  count: 30,  color: 'main' as const },
+      { type: 'Vegan',       count: 8,   color: 'appetizer' as const },
+      { type: 'Gluten-Free', count: 12,  color: 'dessert' as const },
+    ],
+    dietary: {
+      vegetarian: 30,
+      vegan: 8,
+      glutenFree: 12,
+      nutAllergy: 2,
+    },
+  },
   menu: {
     appetizers: [
       {
@@ -200,56 +216,54 @@ export const sampleKitchenBEO: KitchenBEOData = {
       dependencies: ['prep1'],
     },
   ],
-  equipment: {
-    cooking: [
-      {
-        category: 'Ranges & Ovens',
-        items: [
-          { name: 'Convection Oven #1', quantity: 1, location: 'Main Kitchen' },
-          { name: 'Convection Oven #2', quantity: 1, location: 'Main Kitchen' },
-          { name: '6-Burner Range', quantity: 2, location: 'Main Kitchen' },
-          { name: 'Flat Top Griddle', quantity: 1, location: 'Line' },
-        ],
-      },
-      {
-        category: 'Cookware',
-        items: [
-          { name: 'Cast Iron Skillets (12")', quantity: 6, location: 'Sauté Station' },
-          { name: 'Sheet Pans (Full)', quantity: 20, location: 'Oven Station' },
-          { name: 'Sauté Pans (10")', quantity: 8, location: 'Sauté Station' },
-          { name: 'Stock Pots (8qt)', quantity: 4, location: 'Sauce Station' },
-        ],
-      },
-    ],
-    prep: [
-      {
-        category: 'Prep Equipment',
-        items: [
-          { name: 'Food Processor', quantity: 2, location: 'Prep Area' },
-          { name: 'Stand Mixer', quantity: 1, location: 'Pastry' },
-          { name: 'Cutting Boards (Color-coded)', quantity: 12, location: 'Prep Stations' },
-          { name: 'Knife Sets', quantity: 8, location: 'Prep Stations' },
-        ],
-      },
-    ],
-    service: [
-      {
-        category: 'Plating & Serving',
-        items: [
-          { name: 'Dinner Plates (12")', quantity: 180, location: 'Plate Warmer' },
-          { name: 'Dessert Plates (9")', quantity: 165, location: 'Pastry Station' },
-          { name: 'Serving Platters', quantity: 30, location: 'Expo' },
-          { name: 'Sauce Boats', quantity: 25, location: 'Sauce Station', notes: 'Extra requested' },
-        ],
-      },
-    ],
-  },
+  // Fix 2: Replace equipment (nested object) with equipmentAllocation (flat EquipmentCategory[])
+  // and rename all location → station on items
+  equipmentAllocation: [
+    {
+      category: 'Ranges & Ovens',
+      items: [
+        { name: 'Convection Oven #1', quantity: 1, station: 'Main Kitchen' },
+        { name: 'Convection Oven #2', quantity: 1, station: 'Main Kitchen' },
+        { name: '6-Burner Range', quantity: 2, station: 'Main Kitchen' },
+        { name: 'Flat Top Griddle', quantity: 1, station: 'Line' },
+      ],
+    },
+    {
+      category: 'Cookware',
+      items: [
+        { name: 'Cast Iron Skillets (12")', quantity: 6, station: 'Sauté Station' },
+        { name: 'Sheet Pans (Full)', quantity: 20, station: 'Oven Station' },
+        { name: 'Sauté Pans (10")', quantity: 8, station: 'Sauté Station' },
+        { name: 'Stock Pots (8qt)', quantity: 4, station: 'Sauce Station' },
+      ],
+    },
+    {
+      category: 'Prep Equipment',
+      items: [
+        { name: 'Food Processor', quantity: 2, station: 'Prep Area' },
+        { name: 'Stand Mixer', quantity: 1, station: 'Pastry' },
+        { name: 'Cutting Boards (Color-coded)', quantity: 12, station: 'Prep Stations' },
+        { name: 'Knife Sets', quantity: 8, station: 'Prep Stations' },
+      ],
+    },
+    {
+      category: 'Plating & Serving',
+      items: [
+        { name: 'Dinner Plates (12")', quantity: 180, station: 'Plate Warmer' },
+        { name: 'Dessert Plates (9")', quantity: 165, station: 'Pastry Station' },
+        { name: 'Serving Platters', quantity: 30, station: 'Expo' },
+        { name: 'Sauce Boats', quantity: 25, station: 'Sauce Station', notes: 'Extra requested' },
+      ],
+    },
+  ],
+  // Fix 4: rename startTime → shiftStart, add shiftEnd, fix responsibilities and notes on all 5 StaffAssignment objects
   staffAssignments: [
     {
       role: 'Executive Chef',
       count: 1,
       station: 'Expo/Oversight',
-      startTime: '2:00 PM',
+      shiftStart: '2:00 PM',
+      shiftEnd: '11:30 PM',
       responsibilities: [
         'Quality control and final plating approval',
         'Coordinate timing between stations',
@@ -261,7 +275,8 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Sous Chefs',
       count: 2,
       station: 'Hot Line & Cold Station',
-      startTime: '2:30 PM',
+      shiftStart: '2:30 PM',
+      shiftEnd: '11:30 PM',
       responsibilities: [
         'Manage hot line and cold station operations',
         'Train and supervise line cooks',
@@ -276,7 +291,13 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Line Cooks',
       count: 6,
       station: 'Various',
-      startTime: '3:00 PM',
+      shiftStart: '3:00 PM',
+      shiftEnd: '11:00 PM',
+      responsibilities: [
+        'Execute station prep and service tasks',
+        'Maintain station cleanliness and organization',
+        'Follow timing cues from expo',
+      ],
       members: [
         { name: 'Cook - Sauté' },
         { name: 'Cook - Grill' },
@@ -290,16 +311,22 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Prep Cooks',
       count: 3,
       station: 'Prep Kitchen',
-      startTime: '1:00 PM',
+      shiftStart: '1:00 PM',
+      shiftEnd: '7:00 PM',
       responsibilities: ['Vegetable prep', 'Protein portioning', 'Sauce prep'],
     },
     {
       role: 'Pastry Team',
       count: 2,
       station: 'Pastry Kitchen',
-      startTime: '2:00 PM',
-      responsibilities: ['Dessert plating', 'Cake service', 'Garnish prep'],
-      notes: 'Coordinate cake cutting at 9:15 PM with event manager',
+      shiftStart: '2:00 PM',
+      shiftEnd: '10:00 PM',
+      responsibilities: [
+        'Dessert plating',
+        'Cake service',
+        'Garnish prep',
+        'Coordinate cake cutting at 9:15 PM with event manager',
+      ],
     },
   ],
   specialInstructions: `CRITICAL ALLERGEN ALERT: Table 7 has 2 guests with severe nut allergies
@@ -320,13 +347,7 @@ QUALITY STANDARDS:
 - All proteins must be temped before service
 - Garnish fresh herbs on pick-up only
 - Verify plating consistency every 10th plate`,
-  dietaryRestrictions: {
-    vegetarian: 30,
-    vegan: 8,
-    glutenFree: 12,
-    nutAllergy: 2,
-    other: '1 guest requires low-sodium preparation',
-  },
+  // Fix 3: dietaryRestrictions deleted — data now lives in guests.dietary above
 };
 
 // Sample Service BEO Data
