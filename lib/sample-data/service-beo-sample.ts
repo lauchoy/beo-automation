@@ -5,7 +5,7 @@
  * Use for testing, development, and as a reference.
  */
 
-import { type ServiceBEOData } from '@/components/templates/ServiceBEO';
+import { type ServiceBEOData } from '@/lib/types/beo-templates';
 
 export const sampleServiceBEO: ServiceBEOData = {
   header: {
@@ -17,143 +17,143 @@ export const sampleServiceBEO: ServiceBEOData = {
     venue: 'The Conservatory at Willowbrook Estate',
   },
   timeline: [
-    { 
-      time: '3:00 PM', 
-      label: 'Venue Access', 
-      sublabel: 'Setup crew arrival', 
+    {
+      time: '3:00 PM',
+      label: 'Venue Access',
+      sublabel: 'Setup crew arrival',
       type: 'setup',
       responsible: 'Setup Team Lead',
       notes: 'Load in through west service entrance. Elevator available until 4:30 PM.',
     },
-    { 
-      time: '3:30 PM', 
-      label: 'Table Setup', 
-      sublabel: 'Tables, chairs, linens', 
+    {
+      time: '3:30 PM',
+      label: 'Table Setup',
+      sublabel: 'Tables, chairs, linens',
       type: 'setup',
       responsible: 'Setup Crew',
       notes: 'Refer to floor plan diagram. Head table first.',
     },
-    { 
-      time: '4:00 PM', 
-      label: 'FOH Staff Arrival', 
-      sublabel: 'Team briefing', 
+    {
+      time: '4:00 PM',
+      label: 'FOH Staff Arrival',
+      sublabel: 'Team briefing',
       type: 'setup',
       responsible: 'Event Captain',
       notes: 'Mandatory briefing in staff room. Review special needs.',
     },
-    { 
-      time: '4:30 PM', 
-      label: 'Vendor Arrivals', 
-      sublabel: 'DJ, photographer, florist', 
+    {
+      time: '4:30 PM',
+      label: 'Vendor Arrivals',
+      sublabel: 'DJ, photographer, florist',
       type: 'setup',
       responsible: 'Event Captain',
       notes: 'Coordinate load-in. Verify power and setup areas.',
     },
-    { 
-      time: '5:00 PM', 
-      label: 'Doors Open', 
-      sublabel: 'Cocktail hour begins', 
+    {
+      time: '5:00 PM',
+      label: 'Doors Open',
+      sublabel: 'Cocktail hour begins',
       type: 'service',
       responsible: 'All FOH Staff',
-      notes: 'Signature cocktails and passed hors d\'oeuvres. Soft background music.',
+      notes: "Signature cocktails and passed hors d'oeuvres. Soft background music.",
     },
-    { 
-      time: '5:45 PM', 
-      label: 'Seating Begins', 
-      sublabel: 'Guest transition', 
+    {
+      time: '5:45 PM',
+      label: 'Seating Begins',
+      sublabel: 'Guest transition',
       type: 'service',
       responsible: 'Floor Captains',
       notes: 'Gentle announcement at 5:40 PM. Escort guests to tables.',
     },
-    { 
-      time: '6:00 PM', 
-      label: 'All Guests Seated', 
+    {
+      time: '6:00 PM',
+      label: 'All Guests Seated',
       type: 'service',
       responsible: 'Floor Captains',
       notes: 'Final check of place cards and special seating.',
     },
-    { 
-      time: '6:15 PM', 
-      label: 'First Course Service', 
-      sublabel: 'Appetizers', 
+    {
+      time: '6:15 PM',
+      label: 'First Course Service',
+      sublabel: 'Appetizers',
       type: 'service',
       responsible: 'All Servers',
       notes: 'Synchronized delivery - all tables within 5-minute window.',
     },
-    { 
-      time: '7:00 PM', 
-      label: 'Welcome Toasts', 
-      sublabel: 'Father of bride, best man', 
+    {
+      time: '7:00 PM',
+      label: 'Welcome Toasts',
+      sublabel: 'Father of bride, best man',
       type: 'coordination',
       responsible: 'Event Captain',
       notes: 'Coordinate with DJ. Ensure champagne glasses filled.',
     },
-    { 
-      time: '7:15 PM', 
-      label: 'Main Course Service', 
+    {
+      time: '7:15 PM',
+      label: 'Main Course Service',
       type: 'service',
       responsible: 'All Servers',
       notes: 'Plated from kitchen. Announce each dish as served.',
     },
-    { 
-      time: '8:15 PM', 
-      label: 'Dessert Service', 
-      sublabel: 'Pre-plated desserts', 
+    {
+      time: '8:15 PM',
+      label: 'Dessert Service',
+      sublabel: 'Pre-plated desserts',
       type: 'service',
       responsible: 'All Servers',
       notes: 'Clear mains first. Pre-plated desserts from pastry.',
     },
-    { 
-      time: '9:00 PM', 
-      label: 'Coffee Service', 
-      sublabel: 'Coffee, tea, after-dinner drinks', 
+    {
+      time: '9:00 PM',
+      label: 'Coffee Service',
+      sublabel: 'Coffee, tea, after-dinner drinks',
       type: 'service',
       responsible: 'Servers',
       notes: 'Offer coffee and tea to all tables.',
     },
-    { 
-      time: '9:15 PM', 
-      label: 'Cake Cutting Ceremony', 
-      sublabel: 'Coordinate with photographer', 
+    {
+      time: '9:15 PM',
+      label: 'Cake Cutting Ceremony',
+      sublabel: 'Coordinate with photographer',
       type: 'coordination',
       responsible: 'Event Captain + Pastry',
       notes: 'CRITICAL: Photographer and DJ must be coordinated. Spotlight on couple.',
     },
-    { 
-      time: '9:30 PM', 
-      label: 'Cake Service', 
-      sublabel: 'To all guests', 
+    {
+      time: '9:30 PM',
+      label: 'Cake Service',
+      sublabel: 'To all guests',
       type: 'service',
       responsible: 'All Servers',
       notes: 'Pre-sliced in kitchen. Coffee refills offered.',
     },
-    { 
-      time: '10:00 PM', 
-      label: 'Bar Last Call', 
+    {
+      time: '10:00 PM',
+      label: 'Bar Last Call',
       type: 'service',
       responsible: 'Bartenders',
       notes: 'Announce last call. Final drink orders.',
     },
-    { 
-      time: '10:30 PM', 
-      label: 'Last Dance', 
-      sublabel: 'Event conclusion', 
+    {
+      time: '10:30 PM',
+      label: 'Last Dance',
+      sublabel: 'Event conclusion',
       type: 'service',
       responsible: 'DJ',
       notes: 'Begin subtle guest departure preparations.',
     },
-    { 
-      time: '11:00 PM', 
-      label: 'Event Ends', 
-      sublabel: 'Guest departure', 
+    {
+      time: '11:00 PM',
+      label: 'Event Ends',
+      sublabel: 'Guest departure',
       type: 'breakdown',
       responsible: 'All Staff',
       notes: 'Assist guests with coats/items. Secure lost & found.',
     },
-    { 
-      time: '11:15 PM', 
-      label: 'Breakdown Begins', 
-      sublabel: 'Teardown and cleaning', 
+    {
+      time: '11:15 PM',
+      label: 'Breakdown Begins',
+      sublabel: 'Teardown and cleaning',
       type: 'breakdown',
       responsible: 'All Staff',
       notes: 'Load out through west entrance. Return rentals to staging area.',
@@ -315,38 +315,32 @@ export const sampleServiceBEO: ServiceBEOData = {
     specialNeeds: [
       {
         tableNumber: '1',
-        guestName: 'Guests requiring accommodation',
-        requirement: 'Two wheelchair-accessible spaces - remove chairs, ensure 36" clearance from all sides, clear pathway to restroom',
+        guestName: 'Two guests requiring accommodation',
+        requirement: 'Wheelchair accessibility - remove 2 chairs, ensure 36" clearance, clear pathway to restrooms and exit',
         priority: 'critical',
       },
       {
         tableNumber: '7',
-        guestName: 'Johnson family (3 guests)',
-        requirement: 'SEVERE NUT ALLERGIES - allergen-free service with dedicated utensils. Kitchen has been notified. Server must confirm before each course.',
+        guestName: 'Johnson family members',
+        requirement: 'THREE guests with severe nut allergies - allergen-free service, dedicated utensils, verify with kitchen before EVERY course',
         priority: 'critical',
       },
       {
         tableNumber: '12',
-        guestName: 'Guest requiring gluten-free',
-        requirement: 'Celiac disease - strict gluten-free meal preparation. Separate service items.',
+        guestName: 'Guest with celiac disease',
+        requirement: 'Gluten-free bread basket, gluten-free meal preparation, separate service items',
         priority: 'important',
       },
       {
         tableNumber: '15',
         guestName: 'David Chen (Groom)',
-        requirement: 'Shellfish sensitivity - substitute chicken for scallop appetizer',
+        requirement: 'Shellfish sensitivity - chicken appetizer substitution instead of scallops',
         priority: 'important',
       },
       {
         tableNumber: 'Head Table',
         guestName: 'Victoria Whitmore (Bride)',
-        requirement: 'Pescatarian - will have salmon main course',
-        priority: 'important',
-      },
-      {
-        tableNumber: '2',
-        guestName: 'Parents of bride',
-        requirement: 'VIP service - extra attentive, discrete service',
+        requirement: 'Pescatarian preference - will have salmon main course',
         priority: 'note',
       },
     ],
@@ -355,7 +349,7 @@ export const sampleServiceBEO: ServiceBEOData = {
     {
       time: '5:00 PM',
       step: 'Cocktail Hour Service Begins',
-      details: 'Greet guests at entrance, offer signature cocktail "The Whitmore" (champagne with elderflower). Pass hors d\'oeuvres (3 varieties). Background string quartet in Garden Room.',
+      details: "Greet guests at entrance, offer signature cocktail 'The Whitmore' (champagne with elderflower). Pass hors d'oeuvres (3 varieties). Background string quartet in Garden Room.",
       staffInvolved: ['Cocktail Servers (3)', 'Bartenders (Main Bar)', 'Greeters (2)'],
       duration: '1 hour',
     },
@@ -397,7 +391,7 @@ export const sampleServiceBEO: ServiceBEOData = {
     {
       time: '8:15 PM',
       step: 'Clear Main Course',
-      details: 'Efficient clearing of main course. Ask guests if they\'ve finished. Crumb tables using service cloths.',
+      details: "Efficient clearing of main course. Ask guests if they've finished. Crumb tables using service cloths.",
       staffInvolved: ['Servers', 'Bussers'],
       duration: '15 minutes',
     },
@@ -449,88 +443,6 @@ export const sampleServiceBEO: ServiceBEOData = {
       details: 'Complete teardown. Load rental items for pickup. Clean and reset venue. Final walkthrough with venue manager.',
       staffInvolved: ['All Staff', 'Setup Crew'],
       duration: '2 hours',
-    },
-  ],
-  guestManagement: {
-    totalGuests: 180,
-    expectedArrival: '5:00 PM - 5:50 PM',
-    cocktailHour: true,
-    seatingStyle: 'plated',
-    specialNeeds: [
-      {
-        tableNumber: '1',
-        guestName: 'Two guests requiring accommodation',
-        requirement: 'Wheelchair accessibility - remove 2 chairs, ensure 36" clearance, clear pathway to restrooms and exit',
-        priority: 'critical',
-      },
-      {
-        tableNumber: '7',
-        guestName: 'Johnson family members',
-        requirement: 'THREE guests with severe nut allergies - allergen-free service, dedicated utensils, verify with kitchen before EVERY course',
-        priority: 'critical',
-      },
-      {
-        tableNumber: '12',
-        guestName: 'Guest with celiac disease',
-        requirement: 'Gluten-free bread basket, gluten-free meal preparation, separate service items',
-        priority: 'important',
-      },
-      {
-        tableNumber: '15',
-        guestName: 'David Chen (Groom)',
-        requirement: 'Shellfish sensitivity - chicken appetizer substitution instead of scallops',
-        priority: 'important',
-      },
-      {
-        tableNumber: 'Head Table',
-        guestName: 'Victoria Whitmore (Bride)',
-        requirement: 'Pescatarian preference - will have salmon main course',
-        priority: 'note',
-      },
-    ],
-  },
-  serviceFlow: [
-    {
-      time: '5:00 PM',
-      step: 'Cocktail Hour Service',
-      details: 'Guest arrival and cocktail service in Garden Room. Passed hors d\'oeuvres (scallop crostini, caprese skewers, mushroom tartlets). Signature cocktails at bar.',
-      staffInvolved: ['Cocktail Servers', 'Bartenders', 'Food Runners'],
-      duration: '1 hour',
-    },
-    {
-      time: '6:00 PM',
-      step: 'Guest Seating & Water Service',
-      details: 'Coordinate with floor captains to seat all guests. Bussers immediately pour water. Bread and butter service begins.',
-      staffInvolved: ['Floor Captains', 'Servers', 'Bussers'],
-      duration: '15 minutes',
-    },
-    {
-      time: '6:15 PM',
-      step: 'First Course Service',
-      details: 'Synchronized appetizer delivery from kitchen. All tables served within 5-minute window. Announce dishes as served.',
-      staffInvolved: ['All Servers', 'Food Runners'],
-      duration: '45 minutes',
-    },
-    {
-      time: '7:15 PM',
-      step: 'Main Course Service',
-      details: 'Hot plated entrées from kitchen. Verify each guest receives correct selection. Extra sauce boats available upon request.',
-      staffInvolved: ['All Servers', 'Food Runners', 'Floor Captains'],
-      duration: '60 minutes',
-    },
-    {
-      time: '8:30 PM',
-      step: 'Dessert Service',
-      details: 'Pre-plated desserts with coffee service. Clear all main course items first.',
-      staffInvolved: ['Servers', 'Bussers'],
-      duration: '45 minutes',
-    },
-    {
-      time: '9:30 PM',
-      step: 'Wedding Cake Service',
-      details: 'Post-ceremony cake slices to all guests. Coffee and tea refills.',
-      staffInvolved: ['All Servers'],
-      duration: '30 minutes',
     },
   ],
   equipmentSetup: [
@@ -617,8 +529,8 @@ export const sampleServiceBEO: ServiceBEOData = {
       'Champagne Station - Entrance (Toast Service)',
     ],
     specialRequests: [
-      'Signature Cocktail: "The Whitmore" - Champagne, elderflower liqueur, edible flowers',
-      'Premium whiskey selection for groom\'s table (Table 15)',
+      "Signature Cocktail: 'The Whitmore' - Champagne, elderflower liqueur, edible flowers",
+      "Premium whiskey selection for groom's table (Table 15)",
       'Non-alcoholic craft mocktails available (at least 3 varieties)',
       'Specialty coffee bar during dessert service',
       'Champagne toast during speeches - ensure all glasses filled',
