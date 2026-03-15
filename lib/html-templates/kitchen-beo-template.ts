@@ -22,21 +22,18 @@ const allergenIcons: Record<AllergenKey, string> = {
 
 /**
  * Get allergen badges HTML
+ * Accepts allergens as a string array (e.g. ['gluten', 'dairy'])
  */
-function getAllergenBadges(allergens: Record<string, boolean>): string {
-  const activeAllergens = Object.entries(allergens)
-    .filter(([_, active]) => active)
-    .map(([key]) => key as AllergenKey);
-
-  if (activeAllergens.length === 0) return '';
+function getAllergenBadges(allergens: string[]): string {
+  if (!allergens || allergens.length === 0) return '';
 
   return `
     <div class="allergen-badges">
-      ${activeAllergens
+      ${allergens
         .map(
           (allergen) => `
         <div class="allergen-badge" title="Contains ${allergen}">
-          ${allergenIcons[allergen]}
+          ${allergenIcons[allergen as AllergenKey] ?? ''}
           <span class="allergen-label">${allergen}</span>
         </div>
       `
@@ -68,7 +65,7 @@ function renderMenuItem(item: MenuItem, courseType: string): string {
             ${courseType}
           </span>
         </div>
-        ${getAllergenBadges(item.allergens)}
+        ${getAllergenBadges(item.allergens as unknown as string[])}
       </div>
 
       <p class="menu-item-description">${item.description}</p>
