@@ -1,18 +1,15 @@
 /**
  * Test Script for PDF Generation
- * 
+ *
  * Run with: npm run test:pdf
- * 
+ *
  * This script demonstrates PDF generation for both
  * Kitchen and Service BEO templates.
  */
 
 import { generatePDFToFile } from '../lib/pdf-generator';
-import { KitchenBEO } from '../components/templates/KitchenBEO';
-import { ServiceBEO } from '../components/templates/ServiceBEO';
 import type { KitchenBEOData } from '../lib/types/beo-templates';
 import type { ServiceBEOData } from '../lib/types/beo-templates';
-import React from 'react';
 import path from 'path';
 
 // Sample Kitchen BEO Data
@@ -65,7 +62,8 @@ const sampleKitchenBEO: KitchenBEOData = {
           'Pool beurre blanc sauce around scallops',
           'Garnish with microgreens and lemon zest',
         ],
-        scalingNotes: 'For 150 guests: 450 scallops (U-10 size). Prep in batches of 20. Allow 3 pans rotating continuously.',
+        scalingNotes:
+          'For 150 guests: 450 scallops (U-10 size). Prep in batches of 20. Allow 3 pans rotating continuously.',
         shelfLife: 'Serve immediately, hold max 5 minutes',
       },
     ],
@@ -73,7 +71,8 @@ const sampleKitchenBEO: KitchenBEOData = {
       {
         id: 'main1',
         name: 'Herb-Crusted Chicken',
-        description: 'Free-range chicken breast with rosemary jus, roasted fingerlings, seasonal vegetables',
+        description:
+          'Free-range chicken breast with rosemary jus, roasted fingerlings, seasonal vegetables',
         allergens: ['gluten'],
         portionSize: '7 oz breast per guest',
         cookTime: '18-22 min',
@@ -87,7 +86,8 @@ const sampleKitchenBEO: KitchenBEOData = {
           'Transfer to sheet pans, finish in oven to 165°F internal',
           'Rest 5 minutes before slicing on bias',
         ],
-        scalingNotes: 'For 65 portions: 30 lbs chicken breasts. Brine in 3 batches. Sear in rotation, oven capacity is 24 breasts at a time.',
+        scalingNotes:
+          'For 65 portions: 30 lbs chicken breasts. Brine in 3 batches. Sear in rotation, oven capacity is 24 breasts at a time.',
       },
     ],
     desserts: [
@@ -114,7 +114,8 @@ const sampleKitchenBEO: KitchenBEOData = {
       station: 'ALL',
       priority: 'critical',
       timeEstimate: '2:00 PM',
-      details: 'All ingredients prepped, measured, and in position. Verify each station has backup supplies.',
+      details:
+        'All ingredients prepped, measured, and in position. Verify each station has backup supplies.',
     },
     {
       id: 'prep2',
@@ -290,9 +291,7 @@ const sampleServiceBEO: ServiceBEOData = {
         'Staff supervision and support',
       ],
       uniform: 'Black suit, white shirt, black tie',
-      members: [
-        { name: 'Sarah Martinez', position: 'Lead Captain' },
-      ],
+      members: [{ name: 'Sarah Martinez', position: 'Lead Captain' }],
     },
     {
       role: 'Floor Captains',
@@ -354,7 +353,8 @@ const sampleServiceBEO: ServiceBEOData = {
     specialNeeds: [
       {
         tableNumber: '1',
-        requirement: 'Two guests require wheelchair accessibility - clear pathways, remove two chairs',
+        requirement:
+          'Two guests require wheelchair accessibility - clear pathways, remove two chairs',
         priority: 'critical',
       },
       {
@@ -382,7 +382,8 @@ const sampleServiceBEO: ServiceBEOData = {
     {
       time: '6:00 PM',
       step: 'Guest Seating',
-      details: 'Coordinate with floor captains to seat guests. Verify all place cards are correct.',
+      details:
+        'Coordinate with floor captains to seat guests. Verify all place cards are correct.',
       staffInvolved: ['Floor Captains', 'All Servers'],
       duration: '15 minutes',
     },
@@ -452,7 +453,7 @@ const sampleServiceBEO: ServiceBEOData = {
     bartenders: 3,
     locations: ['Main Bar (Foyer)', 'Service Bar (Kitchen Side)'],
     specialRequests: [
-      "Signature cocktail \"The Whitmore\" - champagne with elderflower liqueur",
+      'Signature cocktail "The Whitmore" - champagne with elderflower liqueur',
       "Premium whiskey selection for groom's table",
       'Non-alcoholic craft mocktails available',
     ],
@@ -546,14 +547,15 @@ async function testPDFGeneration() {
   // Test 1: Kitchen BEO PDF
   console.log('📄 Test 1: Generating Kitchen BEO PDF...');
   const kitchenResult = await generatePDFToFile({
-    component: React.createElement(KitchenBEO, { data: sampleKitchenBEO }),
+    type: 'kitchen',
+    data: sampleKitchenBEO,
     outputPath: path.join(outputDir, 'kitchen-beo-test.pdf'),
   });
 
   if (kitchenResult.success) {
     console.log('✅ Kitchen BEO PDF generated successfully!');
     console.log(`   File: ${kitchenResult.filePath}`);
-    console.log(`   Size: ${(kitchenResult.metadata.fileSize || 0) / 1024} KB`);
+    console.log(`   Size: ${((kitchenResult.metadata.fileSize ?? 0) / 1024).toFixed(1)} KB`);
   } else {
     console.log('❌ Kitchen BEO PDF generation failed:', kitchenResult.error);
   }
@@ -563,14 +565,15 @@ async function testPDFGeneration() {
   // Test 2: Service BEO PDF
   console.log('📄 Test 2: Generating Service BEO PDF...');
   const serviceResult = await generatePDFToFile({
-    component: React.createElement(ServiceBEO, { data: sampleServiceBEO }),
+    type: 'service',
+    data: sampleServiceBEO,
     outputPath: path.join(outputDir, 'service-beo-test.pdf'),
   });
 
   if (serviceResult.success) {
     console.log('✅ Service BEO PDF generated successfully!');
     console.log(`   File: ${serviceResult.filePath}`);
-    console.log(`   Size: ${(serviceResult.metadata.fileSize || 0) / 1024} KB`);
+    console.log(`   Size: ${((serviceResult.metadata.fileSize ?? 0) / 1024).toFixed(1)} KB`);
   } else {
     console.log('❌ Service BEO PDF generation failed:', serviceResult.error);
   }
