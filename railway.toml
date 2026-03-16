@@ -1,0 +1,27 @@
+# railway.toml — Production worker configuration for beo-automation
+# Docs: https://docs.railway.app/reference/config-as-code
+
+[build]
+  builder      = "NIXPACKS"          # Let Railway auto-detect Node/Next.js
+  buildCommand = "npm ci && npm run build"
+
+[deploy]
+  # Start the compiled Next.js server (production mode)
+  startCommand  = "npm run start"
+  # Health-check: Railway will verify this path returns 2xx before routing traffic
+  healthcheckPath    = "/"
+  healthcheckTimeout = 60            # seconds to wait for a healthy response
+  # Restart the service automatically if it crashes
+  restartPolicyType  = "ON_FAILURE"
+  restartPolicyMaxRetries = 5
+
+[deploy.resources]
+  # Minimum resources for the production worker
+  # Adjust based on observed memory usage (puppeteer/Chromium is memory-hungry)
+  numReplicas = 1
+
+# Environment variables are managed via Railway dashboard / CLI.
+# Required at runtime (do NOT commit values here):
+#   AIRTABLE_API_KEY
+#   AIRTABLE_BASE_ID
+#   DOPPLER_TOKEN  (if using Doppler for secrets)

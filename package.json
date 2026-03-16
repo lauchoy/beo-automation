@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test:pdf": "tsx scripts/test-pdf-generation.ts"
+    "test:pdf": "tsx scripts/test-pdf-generation.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "next": "14.2.16",
@@ -24,6 +27,7 @@
     "puppeteer": "^22.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.43.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
