@@ -1,1 +1,377 @@
-LyoqCiAqIENlbnRyYWxpemVkIFR5cGUgRGVmaW5pdGlvbnMgZm9yIEJFTyBUZW1wbGF0ZXMKICogCiAqIFRoaXMgZmlsZSBjb250YWlucyBhbGwgVHlwZVNjcmlwdCBpbnRlcmZhY2VzIGFuZCB0eXBlcyB1c2VkIGFjcm9zcwogKiBLaXRjaGVuIGFuZCBTZXJ2aWNlIEJFTyB0ZW1wbGF0ZXMgZm9yIGJldHRlciB0eXBlIHNhZmV0eSBhbmQgSURFIHN1cHBvcnQuCiAqLwoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBDb21tb24gVHlwZXMKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKZXhwb3J0IGludGVyZmFjZSBCRU9IZWFkZXIgewogIGJlb051bWJlcjogc3RyaW5nOwogIGV2ZW50TmFtZTogc3RyaW5nOwogIGV2ZW50RGF0ZTogc3RyaW5nOwogIGV2ZW50VGltZTogc3RyaW5nOwogIGNsaWVudE5hbWU6IHN0cmluZzsKICB2ZW51ZTogc3RyaW5nOwogIGxvZ29Vcmw/OiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgQWxsZXJnZW5UeXBlIHsKICBnbHV0ZW4/OiBib29sZWFuOwogIGRhaXJ5PzogYm9vbGVhbjsKICBudXRzPzogYm9vbGVhbjsKICBzaGVsbGZpc2g/OiBib29sZWFuOwogIGVnZ3M/OiBib29sZWFuOwogIHNveT86IGJvb2xlYW47CiAgZmlzaD86IGJvb2xlYW47Cn0KCmV4cG9ydCB0eXBlIEFsbGVyZ2VuS2V5ID0gJ2dsdXRlbicgfCAnZGFpcnknIHwgJ251dHMnIHwgJ3NoZWxsZmlzaCcgfCAnZWdncycgfCAnc295JyB8ICdmaXNoJzsKCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLy8gS2l0Y2hlbiBCRU8gVHlwZXMKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKZXhwb3J0IGludGVyZmFjZSBNZW51SXRlbSB7CiAgaWQ6IHN0cmluZzsKICBuYW1lOiBzdHJpbmc7CiAgZGVzY3JpcHRpb246IHN0cmluZzsKICBhbGxlcmdlbnM6IEFsbGVyZ2VuVHlwZTsKICBwb3J0aW9uU2l6ZT86IHN0cmluZzsKICBjb29rVGltZT86IHN0cmluZzsKICBjb29raW5nVGVtcGVyYXR1cmU/OiBzdHJpbmc7CiAgc3RhdGlvbj86IHN0cmluZzsKICBwcmVwSW5zdHJ1Y3Rpb25zPzogc3RyaW5nW107CiAgc2NhbGluZ05vdGVzPzogc3RyaW5nOwogIGNhdGVnb3J5PzogJ2FwcGV0aXplcicgfCAnbWFpbicgfCAnZGVzc2VydCcgfCAnc2lkZSc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgTWVudVNlY3Rpb24gewogIGFwcGV0aXplcnM6IE1lbnVJdGVtW107CiAgbWFpbnM6IE1lbnVJdGVtW107CiAgZGVzc2VydHM6IE1lbnVJdGVtW107CiAgc2lkZXM/OiBNZW51SXRlbVtdOwp9CgpleHBvcnQgaW50ZXJmYWNlIFByZXBUYXNrIHsKICBpZDogc3RyaW5nOwogIGxhYmVsOiBzdHJpbmc7CiAgc3RhdGlvbjogc3RyaW5nOwogIGFzc2lnbmVlPzogc3RyaW5nOwogIHByaW9yaXR5PzogJ2hpZ2gnIHwgJ25vcm1hbCcgfCAnbG93JzsKICB0aW1lRXN0aW1hdGU/OiBzdHJpbmc7CiAgZGV0YWlscz86IHN0cmluZzsKICBkZXBlbmRlbmNpZXM/OiBzdHJpbmdbXTsKICBjb21wbGV0ZWQ/OiBib29sZWFuOwp9CgpleHBvcnQgaW50ZXJmYWNlIEVxdWlwbWVudEl0ZW0gewogIG5hbWU6IHN0cmluZzsKICBxdWFudGl0eTogbnVtYmVyOwogIGxvY2F0aW9uPzogc3RyaW5nOwogIHNldHVwVGltZT86IHN0cmluZzsKICBub3Rlcz86IHN0cmluZzsKfQoKZXhwb3J0IGludGVyZmFjZSBFcXVpcG1lbnQgewogIGNhdGVnb3J5OiBzdHJpbmc7CiAgaXRlbXM6IEVxdWlwbWVudEl0ZW1bXTsKfQoKZXhwb3J0IGludGVyZmFjZSBTdGFmZk1lbWJlciB7CiAgbmFtZTogc3RyaW5nOwogIHBvc2l0aW9uPzogc3RyaW5nOwogIHN0YXRpb24/OiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgU3RhZmZBc3NpZ25tZW50IHsKICByb2xlOiBzdHJpbmc7CiAgY291bnQ6IG51bWJlcjsKICBzdGF0aW9uOiBzdHJpbmc7CiAgc3RhcnRUaW1lPzogc3RyaW5nOwogIHJlc3BvbnNpYmlsaXRpZXM/OiBzdHJpbmdbXTsKICBtZW1iZXJzPzogU3RhZmZNZW1iZXJbXTsKICBub3Rlcz86IHN0cmluZzsKfQoKZXhwb3J0IGludGVyZmFjZSBEaWV0YXJ5UmVzdHJpY3Rpb25zIHsKICB2ZWdldGFyaWFuPzogbnVtYmVyOwogIHZlZ2FuPzogbnVtYmVyOwogIGdsdXRlbkZyZWU/OiBudW1iZXI7CiAgbnV0QWxsZXJneT86IG51bWJlcjsKICBvdGhlcj86IHN0cmluZzsKfQoKZXhwb3J0IGludGVyZmFjZSBLaXRjaGVuQkVPSGVhZGVyIGV4dGVuZHMgQkVPSGVhZGVyIHsKICBndWVzdENvdW50OiBudW1iZXI7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgS2l0Y2hlbkJFT0RhdGEgewogIGhlYWRlcjogS2l0Y2hlbkJFT0hlYWRlcjsKICBtZW51OiBNZW51U2VjdGlvbjsKICBwcmVwU2NoZWR1bGU6IFByZXBUYXNrW107CiAgZXF1aXBtZW50OiB7CiAgICBjb29raW5nOiBFcXVpcG1lbnRbXTsKICAgIHByZXA6IEVxdWlwbWVudFtdOwogICAgc2VydmljZTogRXF1aXBtZW50W107CiAgfTsKICBzdGFmZkFzc2lnbm1lbnRzOiBTdGFmZkFzc2lnbm1lbnRbXTsKICBzcGVjaWFsSW5zdHJ1Y3Rpb25zPzogc3RyaW5nOwogIGRpZXRhcnlSZXN0cmljdGlvbnM/OiBEaWV0YXJ5UmVzdHJpY3Rpb25zOwp9CgovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci8vIFNlcnZpY2UgQkVPIFR5cGVzCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCmV4cG9ydCB0eXBlIFRpbWVsaW5lRXZlbnRUeXBlID0gJ3NldHVwJyB8ICdzZXJ2aWNlJyB8ICdicmVha2Rvd24nOwoKZXhwb3J0IGludGVyZmFjZSBUaW1lbGluZUV2ZW50IHsKICB0aW1lOiBzdHJpbmc7CiAgbGFiZWw6IHN0cmluZzsKICBzdWJsYWJlbD86IHN0cmluZzsKICB0eXBlPzogVGltZWxpbmVFdmVudFR5cGU7CiAgbm90ZXM/OiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgU3RhZmZQb3NpdGlvbiB7CiAgcm9sZTogc3RyaW5nOwogIGNvdW50OiBudW1iZXI7CiAgc3RhdGlvbj86IHN0cmluZzsKICBzdGFydFRpbWU/OiBzdHJpbmc7CiAgcmVzcG9uc2liaWxpdGllcz86IHN0cmluZ1tdOwogIG1lbWJlcnM/OiBTdGFmZk1lbWJlcltdOwogIG5vdGVzPzogc3RyaW5nOwp9CgpleHBvcnQgaW50ZXJmYWNlIFNwZWNpYWxTZWF0aW5nIHsKICB0YWJsZTogc3RyaW5nOwogIGd1ZXN0czogbnVtYmVyOwogIG5vdGVzPzogc3RyaW5nOwp9CgpleHBvcnQgaW50ZXJmYWNlIEd1ZXN0TWFuYWdlbWVudCB7CiAgdG90YWxHdWVzdHM6IG51bWJlcjsKICB2aXBDb3VudD86IG51bWJlcjsKICBzZWF0aW5nTGF5b3V0Pzogc3RyaW5nOwogIHNwZWNpYWxTZWF0aW5nPzogU3BlY2lhbFNlYXRpbmdbXTsKICBmbG93UGxhbj86IHN0cmluZzsKfQoKZXhwb3J0IGludGVyZmFjZSBTZXJ2aWNlRXF1aXBtZW50SXRlbSB7CiAgbmFtZTogc3RyaW5nOwogIHF1YW50aXR5OiBudW1iZXI7CiAgbG9jYXRpb246IHN0cmluZzsKICBzZXR1cFRpbWU/OiBzdHJpbmc7CiAgbm90ZXM/OiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgU2VydmljZUVxdWlwbWVudCB7CiAgY2F0ZWdvcnk6IHN0cmluZzsKICBpdGVtczogU2VydmljZUVxdWlwbWVudEl0ZW1bXTsKfQoKZXhwb3J0IGludGVyZmFjZSBFbWVyZ2VuY3lDb250YWN0IHsKICBuYW1lOiBzdHJpbmc7CiAgcm9sZTogc3RyaW5nOwogIHBob25lOiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgVmVuZG9yQ29vcmRpbmF0aW9uIHsKICB2ZW5kb3I6IHN0cmluZzsKICBjb250YWN0OiBzdHJpbmc7CiAgYXJyaXZhbFRpbWU/OiBzdHJpbmc7CiAgcmVxdWlyZW1lbnRzPzogc3RyaW5nOwp9CgpleHBvcnQgaW50ZXJmYWNlIFNlcnZpY2VDb29yZGluYXRpb24gewogIGNvbnRhY3RQZXJzb24/OiBzdHJpbmc7CiAgY29udGFjdFBob25lPzogc3RyaW5nOwogIGVtZXJnZW5jeUNvbnRhY3RzPzogRW1lcmdlbmN5Q29udGFjdFtdOwogIHZlbmRvckNvb3JkaW5hdGlvbj86IFZlbmRvckNvb3JkaW5hdGlvbltdOwogIGNyaXRpY2FsTm90ZXM/OiBzdHJpbmdbXTsKfQoKZXhwb3J0IGludGVyZmFjZSBTZXJ2aWNlQkVPRGF0YSB7CiAgaGVhZGVyOiBCRU9IZWFkZXI7CiAgdGltZWxpbmU6IFRpbWVsaW5lRXZlbnRbXTsKICBzdGFmZlBvc2l0aW9uczogU3RhZmZQb3NpdGlvbltdOwogIGd1ZXN0TWFuYWdlbWVudDogR3Vlc3RNYW5hZ2VtZW50OwogIGVxdWlwbWVudDogewogICAgZGluaW5nOiBTZXJ2aWNlRXF1aXBtZW50W107CiAgICBiYXI6IFNlcnZpY2VFcXVpcG1lbnRbXTsKICAgIGRlY29yOiBTZXJ2aWNlRXF1aXBtZW50W107CiAgfTsKICBjb29yZGluYXRpb246IFNlcnZpY2VDb29yZGluYXRpb247CiAgZmxvb3JQbGFuPzogc3RyaW5nOwogIHNlcnZpY2VOb3Rlcz86IHN0cmluZzsKfQoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBQREYgR2VuZXJhdGlvbiBUeXBlcwovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgpleHBvcnQgdHlwZSBQREZGb3JtYXQgPSAnQTQnIHwgJ0xldHRlcicgfCAnTGVnYWwnIHwgJ1RhYmxvaWQnOwpleHBvcnQgdHlwZSBQREZPcmllbnRhdGlvbiA9ICdwb3J0cmFpdCcgfCAnbGFuZHNjYXBlJzsKZXhwb3J0IHR5cGUgUERGUmV0dXJuRm9ybWF0ID0gJ2J1ZmZlcicgfCAnYmFzZTY0JzsKCmV4cG9ydCBpbnRlcmZhY2UgUERGTWFyZ2luIHsKICB0b3A/OiBzdHJpbmc7CiAgcmlnaHQ/OiBzdHJpbmc7CiAgYm90dG9tPzogc3RyaW5nOwogIGxlZnQ/OiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgUERGR2VuZXJhdGlvbk9wdGlvbnMgewogIGZvcm1hdD86IFBERkZvcm1hdDsKICBvcmllbnRhdGlvbj86IFBERk9yaWVudGF0aW9uOwogIGRpc3BsYXlIZWFkZXJGb290ZXI/OiBib29sZWFuOwogIGhlYWRlclRlbXBsYXRlPzogc3RyaW5nOwogIGZvb3RlclRlbXBsYXRlPzogc3RyaW5nOwogIG1hcmdpbj86IFBERk1hcmdpbjsKICBwcmludEJhY2tncm91bmQ/OiBib29sZWFuOwogIHNjYWxlPzogbnVtYmVyOwogIHdpZHRoPzogc3RyaW5nOwogIGhlaWdodD86IHN0cmluZzsKICB3YWl0Rm9yTmV0d29ya0lkbGU/OiBib29sZWFuOwogIGN1c3RvbUNTUz86IHN0cmluZzsKfQoKZXhwb3J0IGludGVyZmFjZSBQREZNZXRhZGF0YSB7CiAgcGFnZXM6IG51bWJlcjsKICBmaWxlU2l6ZTogbnVtYmVyOwogIGdlbmVyYXRpb25UaW1lOiBudW1iZXI7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgUERGR2VuZXJhdGlvblJlc3VsdCB7CiAgc3VjY2VzczogYm9vbGVhbjsKICBidWZmZXI/OiBCdWZmZXI7CiAgZXJyb3I/OiBzdHJpbmc7CiAgbWV0YWRhdGE/OiBQREZNZXRhZGF0YTsKfQoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBBUEkgUmVxdWVzdC9SZXNwb25zZSBUeXBlcwovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgpleHBvcnQgdHlwZSBCRU9UZW1wbGF0ZVR5cGUgPSAna2l0Y2hlbicgfCAnc2VydmljZSc7CgpleHBvcnQgaW50ZXJmYWNlIEdlbmVyYXRlUERGUmVxdWVzdCB7CiAgdHlwZTogQkVPVGVtcGxhdGVUeXBlOwogIGRhdGE6IEtpdGNoZW5CRU9EYXRhIHwgU2VydmljZUJFT0RhdGE7CiAgcmV0dXJuRm9ybWF0PzogUERGUmV0dXJuRm9ybWF0Owp9CgpleHBvcnQgaW50ZXJmYWNlIEdlbmVyYXRlUERGUmVzcG9uc2UgewogIHN1Y2Nlc3M6IGJvb2xlYW47CiAgcGRmPzogc3RyaW5nOwogIG1ldGFkYXRhPzogUERGTWV0YWRhdGEgJiB7CiAgICBwcm9jZXNzaW5nVGltZTogbnVtYmVyOwogICAgdHlwZTogQkVPVGVtcGxhdGVUeXBlOwogIH07CiAgZXJyb3I/OiBzdHJpbmc7Cn0KCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLy8gQ29tcG9uZW50IFByb3BzIFR5cGVzCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCmV4cG9ydCBpbnRlcmZhY2UgS2l0Y2hlbkJFT1Byb3BzIHsKICBkYXRhOiBLaXRjaGVuQkVPRGF0YTsKfQoKZXhwb3J0IGludGVyZmFjZSBTZXJ2aWNlQkVPUHJvcHMgewogIGRhdGE6IFNlcnZpY2VCRU9EYXRhOwp9CgpleHBvcnQgaW50ZXJmYWNlIE1lbnVJdGVtQ2FyZFByb3BzIHsKICBpdGVtOiBNZW51SXRlbTsKICBjb3Vyc2VUeXBlOiBzdHJpbmc7Cn0KCmV4cG9ydCBpbnRlcmZhY2UgUHJlcFNjaGVkdWxlUHJvcHMgewogIHRhc2tzOiBQcmVwVGFza1tdOwp9CgpleHBvcnQgaW50ZXJmYWNlIFN0YWZmQXNzaWdubWVudHNQcm9wcyB7CiAgYXNzaWdubWVudHM6IFN0YWZmQXNzaWdubWVudFtdOwp9CgpleHBvcnQgaW50ZXJmYWNlIFNlcnZpY2VUaW1lbGluZVByb3BzIHsKICBldmVudHM6IFRpbWVsaW5lRXZlbnRbXTsKfQoKZXhwb3J0IGludGVyZmFjZSBTdGFmZlBvc2l0aW9uaW5nUHJvcHMgewogIHBvc2l0aW9uczogU3RhZmZQb3NpdGlvbltdOwp9CgpleHBvcnQgaW50ZXJmYWNlIEd1ZXN0TWFuYWdlbWVudFByb3BzIHsKICBtYW5hZ2VtZW50OiBHdWVzdE1hbmFnZW1lbnQ7Cn0KCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLy8gVXRpbGl0eSBUeXBlcwovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgpleHBvcnQgdHlwZSBQcmlvcml0eSA9ICdoaWdoJyB8ICdub3JtYWwnIHwgJ2xvdyc7CmV4cG9ydCB0eXBlIEFsbGVyZ2VuU2l6ZSA9ICdzbScgfCAnbWQnIHwgJ2xnJzsKCmV4cG9ydCB0eXBlIFBhcnRpYWxCRU9EYXRhPFQ+ID0gewogIFtLIGluIGtleW9mIFRdPzogVFtLXSBleHRlbmRzIG9iamVjdCA/IFBhcnRpYWw8VFtLXT4gOiBUW0tdOwp9OwoKZXhwb3J0IHR5cGUgUmVxdWlyZWRCRU9GaWVsZHMgPSBQaWNrPAogIEtpdGNoZW5CRU9EYXRhLAogICdoZWFkZXInIHwgJ21lbnUnIHwgJ3ByZXBTY2hlZHVsZScgfCAnZXF1aXBtZW50JyB8ICdzdGFmZkFzc2lnbm1lbnRzJwo+OwoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBWYWxpZGF0aW9uIEhlbHBlcnMKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKZXhwb3J0IGludGVyZmFjZSBWYWxpZGF0aW9uUmVzdWx0IHsKICB2YWxpZDogYm9vbGVhbjsKICBlcnJvcnM/OiBzdHJpbmdbXTsKfQoKZXhwb3J0IGZ1bmN0aW9uIHZhbGlkYXRlS2l0Y2hlbkJFT0RhdGEoZGF0YTogYW55KTogVmFsaWRhdGlvblJlc3VsdCB7CiAgY29uc3QgZXJyb3JzOiBzdHJpbmdbXSA9IFtdOwoKICBpZiAoIWRhdGEuaGVhZGVyPy5iZW9OdW1iZXIpIGVycm9ycy5wdXNoKCdCRU8gbnVtYmVyIGlzIHJlcXVpcmVkJyk7CiAgaWYgKCFkYXRhLmhlYWRlcj8uZXZlbnROYW1lKSBlcnJvcnMucHVzaCgnRXZlbnQgbmFtZSBpcyByZXF1aXJlZCcpOwogIGlmICghZGF0YS5oZWFkZXI/Lmd1ZXN0Q291bnQgfHwgZGF0YS5oZWFkZXIuZ3Vlc3RDb3VudCA8IDEpIHsKICAgIGVycm9ycy5wdXNoKCdHdWVzdCBjb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiAwJyk7CiAgfQogIGlmICghZGF0YS5tZW51KSBlcnJvcnMucHVzaCgnTWVudSBkYXRhIGlzIHJlcXVpcmVkJyk7CiAgaWYgKCFkYXRhLnByZXBTY2hlZHVsZSkgZXJyb3JzLnB1c2goJ1ByZXAgc2NoZWR1bGUgaXMgcmVxdWlyZWQnKTsKICBpZiAoIWRhdGEuZXF1aXBtZW50KSBlcnJvcnMucHVzaCgnRXF1aXBtZW50IGRhdGEgaXMgcmVxdWlyZWQnKTsKICBpZiAoIWRhdGEuc3RhZmZBc3NpZ25tZW50cykgZXJyb3JzLnB1c2goJ1N0YWZmIGFzc2lnbm1lbnRzIGFyZSByZXF1aXJlZCcpOwoKICByZXR1cm4gewogICAgdmFsaWQ6IGVycm9ycy5sZW5ndGggPT09IDAsCiAgICBlcnJvcnM6IGVycm9ycy5sZW5ndGggPiAwID8gZXJyb3JzIDogdW5kZWZpbmVkLAogIH07Cn0KCmV4cG9ydCBmdW5jdGlvbiB2YWxpZGF0ZVNlcnZpY2VCRU9EYXRhKGRhdGE6IGFueSk6IFZhbGlkYXRpb25SZXN1bHQgewogIGNvbnN0IGVycm9yczogc3RyaW5nW10gPSBbXTsKCiAgaWYgKCFkYXRhLmhlYWRlcj8uYmVvTnVtYmVyKSBlcnJvcnMucHVzaCgnQkVPIG51bWJlciBpcyByZXF1aXJlZCcpOwogIGlmICghZGF0YS5oZWFkZXI/LmV2ZW50TmFtZSkgZXJyb3JzLnB1c2goJ0V2ZW50IG5hbWUgaXMgcmVxdWlyZWQnKTsKICBpZiAoIWRhdGEudGltZWxpbmUgfHwgZGF0YS50aW1lbGluZS5sZW5ndGggPT09IDApIHsKICAgIGVycm9ycy5wdXNoKCdUaW1lbGluZSBldmVudHMgYXJlIHJlcXVpcmVkJyk7CiAgfQogIGlmICghZGF0YS5zdGFmZlBvc2l0aW9ucykgZXJyb3JzLnB1c2goJ1N0YWZmIHBvc2l0aW9ucyBhcmUgcmVxdWlyZWQnKTsKICBpZiAoIWRhdGEuZ3Vlc3RNYW5hZ2VtZW50Py50b3RhbEd1ZXN0cyB8fCBkYXRhLmd1ZXN0TWFuYWdlbWVudC50b3RhbEd1ZXN0cyA8IDEpIHsKICAgIGVycm9ycy5wdXNoKCdUb3RhbCBndWVzdCBjb3VudCBtdXN0IGJlIGdyZWF0ZXIgdGhhbiAwJyk7CiAgfQogIGlmICghZGF0YS5lcXVpcG1lbnQpIGVycm9ycy5wdXNoKCdFcXVpcG1lbnQgZGF0YSBpcyByZXF1aXJlZCcpOwoKICByZXR1cm4gewogICAgdmFsaWQ6IGVycm9ycy5sZW5ndGggPT09IDAsCiAgICBlcnJvcnM6IGVycm9ycy5sZW5ndGggPiAwID8gZXJyb3JzIDogdW5kZWZpbmVkLAogIH07Cn0K
+/**
+ * Centralized Type Definitions for BEO Templates
+ * 
+ * This file contains all TypeScript interfaces and types used across
+ * Kitchen and Service BEO templates for better type safety and IDE support.
+ */
+
+// ============================================================================
+// Common Types
+// ============================================================================
+
+export interface BEOHeader {
+  beoNumber: string;
+  eventName: string;
+  eventDate: string;
+  eventTime: string;
+  clientName: string;
+  venue: string;
+  logoUrl?: string;
+}
+
+export interface AllergenType {
+  gluten?: boolean;
+  dairy?: boolean;
+  nuts?: boolean;
+  shellfish?: boolean;
+  eggs?: boolean;
+  soy?: boolean;
+  fish?: boolean;
+}
+
+export type AllergenKey = 'gluten' | 'dairy' | 'nuts' | 'shellfish' | 'eggs' | 'soy' | 'fish';
+
+// ============================================================================
+// Kitchen BEO Types
+// ============================================================================
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  allergens: AllergenType;
+  portionSize?: string;
+  cookTime?: string;
+  cookingTemperature?: string;
+  station?: string;
+  prepInstructions?: string[];
+  scalingNotes?: string;
+  category?: 'appetizer' | 'main' | 'dessert' | 'side';
+}
+
+export interface MenuSection {
+  appetizers: MenuItem[];
+  mains: MenuItem[];
+  desserts: MenuItem[];
+  sides?: MenuItem[];
+}
+
+export interface PrepTask {
+  id: string;
+  label: string;
+  station: string;
+  assignee?: string;
+  priority?: 'high' | 'normal' | 'low';
+  timeEstimate?: string;
+  details?: string;
+  dependencies?: string[];
+  completed?: boolean;
+}
+
+export interface EquipmentItem {
+  name: string;
+  quantity: number;
+  location?: string;
+  setupTime?: string;
+  notes?: string;
+}
+
+export interface Equipment {
+  category: string;
+  items: EquipmentItem[];
+}
+
+export interface StaffMember {
+  name: string;
+  position?: string;
+  station?: string;
+}
+
+export interface StaffAssignment {
+  role: string;
+  count: number;
+  station: string;
+  startTime?: string;
+  responsibilities?: string[];
+  members?: StaffMember[];
+  notes?: string;
+}
+
+export interface DietaryRestrictions {
+  vegetarian?: number;
+  vegan?: number;
+  glutenFree?: number;
+  nutAllergy?: number;
+  other?: string;
+}
+
+export interface KitchenBEOHeader extends BEOHeader {
+  guestCount: number;
+}
+
+export interface KitchenBEOData {
+  header: KitchenBEOHeader;
+  menu: MenuSection;
+  prepSchedule: PrepTask[];
+  equipment: {
+    cooking: Equipment[];
+    prep: Equipment[];
+    service: Equipment[];
+  };
+  staffAssignments: StaffAssignment[];
+  specialInstructions?: string;
+  dietaryRestrictions?: DietaryRestrictions;
+}
+
+// ============================================================================
+// Service BEO Types
+// ============================================================================
+
+export type TimelineEventType = 'setup' | 'service' | 'breakdown';
+
+export interface TimelineEvent {
+  time: string;
+  label: string;
+  sublabel?: string;
+  type?: TimelineEventType;
+  notes?: string;
+}
+
+export interface StaffPosition {
+  role: string;
+  count: number;
+  station?: string;
+  startTime?: string;
+  responsibilities?: string[];
+  members?: StaffMember[];
+  notes?: string;
+}
+
+export interface SpecialSeating {
+  table: string;
+  guests: number;
+  notes?: string;
+}
+
+export interface GuestManagement {
+  totalGuests: number;
+  vipCount?: number;
+  seatingLayout?: string;
+  specialSeating?: SpecialSeating[];
+  flowPlan?: string;
+}
+
+export interface ServiceEquipmentItem {
+  name: string;
+  quantity: number;
+  location: string;
+  setupTime?: string;
+  notes?: string;
+}
+
+export interface ServiceEquipment {
+  category: string;
+  items: ServiceEquipmentItem[];
+}
+
+export interface EmergencyContact {
+  name: string;
+  role: string;
+  phone: string;
+}
+
+export interface VendorCoordination {
+  vendor: string;
+  contact: string;
+  arrivalTime?: string;
+  requirements?: string;
+}
+
+export interface ServiceCoordination {
+  contactPerson?: string;
+  contactPhone?: string;
+  emergencyContacts?: EmergencyContact[];
+  vendorCoordination?: VendorCoordination[];
+  criticalNotes?: string[];
+}
+
+export interface ServiceBEOData {
+  header: BEOHeader;
+  timeline: TimelineEvent[];
+  staffPositions: StaffPosition[];
+  guestManagement: GuestManagement;
+  equipment: {
+    dining: ServiceEquipment[];
+    bar: ServiceEquipment[];
+    decor: ServiceEquipment[];
+  };
+  coordination: ServiceCoordination;
+  floorPlan?: string;
+  serviceNotes?: string;
+}
+
+// ============================================================================
+// PDF Generation Types
+// ============================================================================
+
+export type PDFFormat = 'A4' | 'Letter' | 'Legal' | 'Tabloid';
+export type PDFOrientation = 'portrait' | 'landscape';
+export type PDFReturnFormat = 'buffer' | 'base64';
+
+export interface PDFMargin {
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+}
+
+export interface PDFGenerationOptions {
+  format?: PDFFormat;
+  orientation?: PDFOrientation;
+  displayHeaderFooter?: boolean;
+  headerTemplate?: string;
+  footerTemplate?: string;
+  margin?: PDFMargin;
+  printBackground?: boolean;
+  scale?: number;
+  width?: string;
+  height?: string;
+  waitForNetworkIdle?: boolean;
+  customCSS?: string;
+}
+
+export interface PDFMetadata {
+  pages: number;
+  fileSize: number;
+  generationTime: number;
+}
+
+export interface PDFGenerationResult {
+  success: boolean;
+  buffer?: Buffer;
+  error?: string;
+  metadata?: PDFMetadata;
+}
+
+// ============================================================================
+// API Request/Response Types
+// ============================================================================
+
+export type BEOTemplateType = 'kitchen' | 'service';
+
+export interface GeneratePDFRequest {
+  type: BEOTemplateType;
+  data: KitchenBEOData | ServiceBEOData;
+  returnFormat?: PDFReturnFormat;
+}
+
+export interface GeneratePDFResponse {
+  success: boolean;
+  pdf?: string;
+  metadata?: PDFMetadata & {
+    processingTime: number;
+    type: BEOTemplateType;
+  };
+  error?: string;
+}
+
+// ============================================================================
+// Component Props Types
+// ============================================================================
+
+export interface KitchenBEOProps {
+  data: KitchenBEOData;
+}
+
+export interface ServiceBEOProps {
+  data: ServiceBEOData;
+}
+
+export interface MenuItemCardProps {
+  item: MenuItem;
+  courseType: string;
+}
+
+export interface PrepScheduleProps {
+  tasks: PrepTask[];
+}
+
+export interface StaffAssignmentsProps {
+  assignments: StaffAssignment[];
+}
+
+export interface ServiceTimelineProps {
+  events: TimelineEvent[];
+}
+
+export interface StaffPositioningProps {
+  positions: StaffPosition[];
+}
+
+export interface GuestManagementProps {
+  management: GuestManagement;
+}
+
+// ============================================================================
+// Utility Types
+// ============================================================================
+
+export type Priority = 'high' | 'normal' | 'low';
+export type AllergenSize = 'sm' | 'md' | 'lg';
+
+export type PartialBEOData<T> = {
+  [K in keyof T]?: T[K] extends object ? Partial<T[K]> : T[K];
+};
+
+export type RequiredBEOFields = Pick<
+  KitchenBEOData,
+  'header' | 'menu' | 'prepSchedule' | 'equipment' | 'staffAssignments'
+>;
+
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
+export interface ValidationResult {
+  valid: boolean;
+  errors?: string[];
+}
+
+export function validateKitchenBEOData(data: any): ValidationResult {
+  const errors: string[] = [];
+
+  if (!data.header?.beoNumber) errors.push('BEO number is required');
+  if (!data.header?.eventName) errors.push('Event name is required');
+  if (!data.header?.guestCount || data.header.guestCount < 1) {
+    errors.push('Guest count must be greater than 0');
+  }
+  if (!data.menu) errors.push('Menu data is required');
+  if (!data.prepSchedule) errors.push('Prep schedule is required');
+  if (!data.equipment) errors.push('Equipment data is required');
+  if (!data.staffAssignments) errors.push('Staff assignments are required');
+
+  return {
+    valid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+export function validateServiceBEOData(data: any): ValidationResult {
+  const errors: string[] = [];
+
+  if (!data.header?.beoNumber) errors.push('BEO number is required');
+  if (!data.header?.eventName) errors.push('Event name is required');
+  if (!data.timeline || data.timeline.length === 0) {
+    errors.push('Timeline events are required');
+  }
+  if (!data.staffPositions) errors.push('Staff positions are required');
+  if (!data.guestManagement?.totalGuests || data.guestManagement.totalGuests < 1) {
+    errors.push('Total guest count must be greater than 0');
+  }
+  if (!data.equipment) errors.push('Equipment data is required');
+
+  return {
+    valid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
