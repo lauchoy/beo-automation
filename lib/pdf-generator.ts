@@ -1,16 +1,16 @@
 /**
  * PDF Generation Utility for BEO Templates
- * 
+ *
  * Converts BEO data to professional PDF documents using Puppeteer
  * with template-based HTML generation to avoid Next.js 14 compatibility issues.
- * 
+ *
  * Features:
  * - High-quality PDF generation
  * - Maintains print-optimized styling
  * - Custom headers/footers
  * - Configurable page settings
  * - Support for both Kitchen and Service BEOs
- * 
+ *
  * Architecture Note:
  * This library uses template literal-based HTML generation instead of
  * react-dom/server to ensure compatibility with Next.js 14 Server Components.
@@ -22,9 +22,12 @@ import { generateServiceBEOHTML } from './html-templates/service-beo-template';
 import type { KitchenBEOData, ServiceBEOData } from '@/components/templates/types';
 
 // PDF Generation Configuration
+// Note: `orientation` is kept here for callers that want to track it, but it is
+// intentionally NOT spread into Puppeteer's PDFOptions — Puppeteer v21+ removed
+// that field.  Use `preferCSSPageSize` or explicit `width`/`height` instead.
 export interface PDFConfig {
   format?: 'A4' | 'Letter' | 'Legal';
-  orientation?: 'portrait' | 'landscape';
+  orientation?: 'portrait' | 'landscape'; // informational only — not passed to Puppeteer
   margin?: {
     top?: string;
     right?: string;
@@ -63,7 +66,9 @@ export interface PDFGenerationResult {
 }
 
 /**
- * Default PDF configuration optimized for BEO documents
+ * Default PDF configuration optimized for BEO documents.
+ * `orientation` is stored here for reference but stripped before
+ * being passed to page.pdf() — see toPuppeteerPDFOptions().
  */
 const DEFAULT_PDF_CONFIG: PDFConfig = {
   format: 'A4',
@@ -79,6 +84,17 @@ const DEFAULT_PDF_CONFIG: PDFConfig = {
   scale: 1,
   preferCSSPageSize: false,
 };
+
+/**
+ * Convert a PDFConfig into a Puppeteer-compatible PDFOptions object.
+ * Strips `orientation` which was removed from PDFOptions in Puppeteer v21+.
+ */
+function toPuppeteerPDFOptions(config: PDFConfig): PDFOptions {
+  // Destructure out orientation so it is never spread into PDFOptions.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { orientation: _orientation, ...puppeteerSafeConfig } = config;
+  return puppeteerSafeConfig as PDFOptions;
+}
 
 /**
  * Generate HTML from BEO data using template generators
@@ -139,11 +155,12 @@ export async function generatePDF(
     // Wait for fonts to load
     await page.evaluateHandle('document.fonts.ready');
 
-    // Merge PDF config
-    const pdfConfig: PDFOptions = {
+    // Merge configs then strip orientation before handing to Puppeteer
+    const mergedConfig: PDFConfig = {
       ...DEFAULT_PDF_CONFIG,
       ...options.config,
     };
+    const pdfConfig: PDFOptions = toPuppeteerPDFOptions(mergedConfig);
 
     // Generate PDF
     const pdfBuffer = await page.pdf(pdfConfig);
@@ -224,10 +241,12 @@ export async function generatePDFFromURL(
     // Wait for fonts
     await page.evaluateHandle('document.fonts.ready');
 
-    const pdfConfig: PDFOptions = {
+    // Merge then strip orientation before handing to Puppeteer
+    const mergedConfig: PDFConfig = {
       ...DEFAULT_PDF_CONFIG,
       ...config,
     };
+    const pdfConfig: PDFOptions = toPuppeteerPDFOptions(mergedConfig);
 
     const pdfBuffer = await page.pdf(pdfConfig);
 
@@ -275,6 +294,8 @@ export async function generateBatchPDFs(
 
 /**
  * Utility: Get optimal PDF config for BEO type
+ * Returns a PDFConfig (with orientation for reference).
+ * Callers must use toPuppeteerPDFOptions() before passing to page.pdf().
  */
 export function getBEOPDFConfig(type: 'kitchen' | 'service'): PDFConfig {
   const baseConfig = { ...DEFAULT_PDF_CONFIG };

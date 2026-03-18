@@ -1,6 +1,6 @@
 /**
  * Sample Data for BEO Templates
- * 
+ *
  * Use these examples to test the Kitchen and Service BEO templates
  * and understand the expected data structure.
  */
@@ -8,7 +8,16 @@
 import type { KitchenBEOData } from './KitchenBEO';
 import type { ServiceBEOData } from './ServiceBEO';
 
+// ---------------------------------------------------------------------------
 // Sample Kitchen BEO Data
+// Types sourced from KitchenBEO.tsx:
+//   PrepTask.priority  : 'critical' | 'high' | 'medium' | 'low'  (required)
+//   PrepTask.timeEstimate                                          (required)
+//   EquipmentCategory.items[].station                             (required)
+//   StaffAssignment.shiftStart / shiftEnd                         (required)
+//   KitchenBEOData.guests                                         (required)
+//   KitchenBEOData.equipmentAllocation                            (required)
+// ---------------------------------------------------------------------------
 export const sampleKitchenBEO: KitchenBEOData = {
   header: {
     beoNumber: 'BEO-2024-0892',
@@ -19,6 +28,24 @@ export const sampleKitchenBEO: KitchenBEOData = {
     venue: 'The Conservatory at Willowbrook',
     guestCount: 150,
   },
+
+  guests: {
+    total: 150,
+    breakdown: [
+      { type: 'Chicken (main)', count: 65, color: 'main' },
+      { type: 'Salmon (main)', count: 45, color: 'main' },
+      { type: 'Vegetable Wellington (main)', count: 30, color: 'main' },
+      { type: 'Appetizer portions', count: 150, color: 'appetizer' },
+      { type: 'Dessert portions', count: 150, color: 'dessert' },
+    ],
+    dietary: {
+      vegetarian: 30,
+      vegan: 8,
+      glutenFree: 12,
+      nutAllergy: 2,
+    },
+  },
+
   menu: {
     appetizers: [
       {
@@ -154,6 +181,9 @@ export const sampleKitchenBEO: KitchenBEOData = {
       },
     ],
   },
+
+  // PrepTask.priority is REQUIRED and must be 'critical'|'high'|'medium'|'low'
+  // PrepTask.timeEstimate is REQUIRED
   prepSchedule: [
     {
       id: 'prep1',
@@ -168,8 +198,9 @@ export const sampleKitchenBEO: KitchenBEOData = {
       id: 'prep2',
       label: 'Scallops cleaned, dried, and portioned',
       station: 'Sauté',
-      assignee: 'Chef Martinez',
+      priority: 'high',
       timeEstimate: '3:00 PM',
+      assignee: 'Chef Martinez',
       details:
         'Remove side muscle, pat completely dry. Portion 3 per plate on parchment-lined trays.',
     },
@@ -177,6 +208,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
       id: 'prep3',
       label: 'All vegetables prepped and blanched',
       station: 'Garde Manger',
+      priority: 'medium',
       timeEstimate: '3:30 PM',
       details: 'Asparagus, carrots, beans blanched and shocked. Fingerlings par-cooked.',
     },
@@ -192,62 +224,61 @@ export const sampleKitchenBEO: KitchenBEOData = {
       id: 'prep5',
       label: 'Allergen-free station verified and isolated',
       station: 'Expo',
-      priority: 'high',
+      priority: 'critical',
       timeEstimate: '5:30 PM',
       details: 'Dedicated pans, utensils, cutting board for Table 7. Clearly marked.',
       dependencies: ['prep1'],
     },
   ],
-  equipment: {
-    cooking: [
-      {
-        category: 'Ranges & Ovens',
-        items: [
-          { name: 'Convection Oven #1', quantity: 1, location: 'Main Kitchen' },
-          { name: 'Convection Oven #2', quantity: 1, location: 'Main Kitchen' },
-          { name: '6-Burner Range', quantity: 2, location: 'Main Kitchen' },
-          { name: 'Flat Top Griddle', quantity: 1, location: 'Line' },
-        ],
-      },
-      {
-        category: 'Cookware',
-        items: [
-          { name: 'Cast Iron Skillets (12")', quantity: 6, location: 'Sauté Station' },
-          { name: 'Sheet Pans (Full)', quantity: 20, location: 'Oven Station' },
-          { name: 'Sauté Pans (10")', quantity: 8, location: 'Sauté Station' },
-          { name: 'Stock Pots (8qt)', quantity: 4, location: 'Sauce Station' },
-        ],
-      },
-    ],
-    prep: [
-      {
-        category: 'Prep Equipment',
-        items: [
-          { name: 'Food Processor', quantity: 2, location: 'Prep Area' },
-          { name: 'Stand Mixer', quantity: 1, location: 'Pastry' },
-          { name: 'Cutting Boards (Color-coded)', quantity: 12, location: 'Prep Stations' },
-          { name: 'Knife Sets', quantity: 8, location: 'Prep Stations' },
-        ],
-      },
-    ],
-    service: [
-      {
-        category: 'Plating & Serving',
-        items: [
-          { name: 'Dinner Plates (12")', quantity: 180, location: 'Plate Warmer' },
-          { name: 'Dessert Plates (9")', quantity: 165, location: 'Pastry Station' },
-          { name: 'Serving Platters', quantity: 30, location: 'Expo' },
-          { name: 'Sauce Boats', quantity: 25, location: 'Sauce Station', notes: 'Extra requested' },
-        ],
-      },
-    ],
-  },
+
+  // EquipmentCategory.items must use `station` (not `location`)
+  equipmentAllocation: [
+    {
+      category: 'Ranges & Ovens',
+      items: [
+        { name: 'Convection Oven #1', quantity: 1, station: 'Main Kitchen' },
+        { name: 'Convection Oven #2', quantity: 1, station: 'Main Kitchen' },
+        { name: '6-Burner Range', quantity: 2, station: 'Main Kitchen' },
+        { name: 'Flat Top Griddle', quantity: 1, station: 'Line' },
+      ],
+    },
+    {
+      category: 'Cookware',
+      items: [
+        { name: 'Cast Iron Skillets (12")', quantity: 6, station: 'Sauté Station' },
+        { name: 'Sheet Pans (Full)', quantity: 20, station: 'Oven Station' },
+        { name: 'Sauté Pans (10")', quantity: 8, station: 'Sauté Station' },
+        { name: 'Stock Pots (8qt)', quantity: 4, station: 'Sauce Station' },
+      ],
+    },
+    {
+      category: 'Prep Equipment',
+      items: [
+        { name: 'Food Processor', quantity: 2, station: 'Prep Area' },
+        { name: 'Stand Mixer', quantity: 1, station: 'Pastry' },
+        { name: 'Cutting Boards (Color-coded)', quantity: 12, station: 'Prep Stations' },
+        { name: 'Knife Sets', quantity: 8, station: 'Prep Stations' },
+      ],
+    },
+    {
+      category: 'Plating & Serving',
+      items: [
+        { name: 'Dinner Plates (12")', quantity: 180, station: 'Plate Warmer' },
+        { name: 'Dessert Plates (9")', quantity: 165, station: 'Pastry Station' },
+        { name: 'Serving Platters', quantity: 30, station: 'Expo' },
+        { name: 'Sauce Boats', quantity: 25, station: 'Sauce Station', notes: 'Extra requested' },
+      ],
+    },
+  ],
+
+  // StaffAssignment requires shiftStart + shiftEnd (not startTime)
   staffAssignments: [
     {
       role: 'Executive Chef',
       count: 1,
       station: 'Expo/Oversight',
-      startTime: '2:00 PM',
+      shiftStart: '2:00 PM',
+      shiftEnd: '11:00 PM',
       responsibilities: [
         'Quality control and final plating approval',
         'Coordinate timing between stations',
@@ -259,7 +290,8 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Sous Chefs',
       count: 2,
       station: 'Hot Line & Cold Station',
-      startTime: '2:30 PM',
+      shiftStart: '2:30 PM',
+      shiftEnd: '11:00 PM',
       responsibilities: [
         'Manage hot line and cold station operations',
         'Train and supervise line cooks',
@@ -274,7 +306,13 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Line Cooks',
       count: 6,
       station: 'Various',
-      startTime: '3:00 PM',
+      shiftStart: '3:00 PM',
+      shiftEnd: '11:00 PM',
+      responsibilities: [
+        'Execute assigned station production',
+        'Maintain station cleanliness and mise en place',
+        'Follow prep schedule and quality standards',
+      ],
       members: [
         { name: 'Cook - Sauté' },
         { name: 'Cook - Grill' },
@@ -288,18 +326,26 @@ export const sampleKitchenBEO: KitchenBEOData = {
       role: 'Prep Cooks',
       count: 3,
       station: 'Prep Kitchen',
-      startTime: '1:00 PM',
+      shiftStart: '1:00 PM',
+      shiftEnd: '7:00 PM',
       responsibilities: ['Vegetable prep', 'Protein portioning', 'Sauce prep'],
     },
     {
       role: 'Pastry Team',
       count: 2,
       station: 'Pastry Kitchen',
-      startTime: '2:00 PM',
+      shiftStart: '2:00 PM',
+      shiftEnd: '10:00 PM',
       responsibilities: ['Dessert plating', 'Cake service', 'Garnish prep'],
-      notes: 'Coordinate cake cutting at 9:15 PM with event manager',
     },
   ],
+
+  allergenNotes: [
+    'Table 7: 2 guests with severe nut allergies — dedicated pans, utensils, cutting board required',
+    'All allergen-free plates must be clearly marked before leaving the kitchen',
+    'Double-check allergen status with FOH captain before each course service',
+  ],
+
   specialInstructions: `CRITICAL ALLERGEN ALERT: Table 7 has 2 guests with severe nut allergies
 - Use dedicated pans, utensils, and cutting boards
 - Separate prep area clearly marked
@@ -318,16 +364,22 @@ QUALITY STANDARDS:
 - All proteins must be temped before service
 - Garnish fresh herbs on pick-up only
 - Verify plating consistency every 10th plate`,
-  dietaryRestrictions: {
-    vegetarian: 30,
-    vegan: 8,
-    glutenFree: 12,
-    nutAllergy: 2,
-    other: '1 guest requires low-sodium preparation',
-  },
 };
 
+// ---------------------------------------------------------------------------
 // Sample Service BEO Data
+// Types sourced from ServiceBEO.tsx:
+//   ServiceBEOData.floorPlan                            (required)
+//   ServiceBEOData.staffPositioning                     (required, not staffPositions)
+//   ServiceBEOData.guestManagement.expectedArrival      (required)
+//   ServiceBEOData.guestManagement.cocktailHour         (required)
+//   ServiceBEOData.guestManagement.seatingStyle         (required)
+//   ServiceBEOData.guestManagement.specialNeeds         (required)
+//   ServiceBEOData.serviceFlow                          (required)
+//   ServiceBEOData.equipmentSetup                       (required)
+//   ServiceBEOData.emergencyContacts                    (required)
+//   StaffPosition.location / shiftStart / shiftEnd / responsibilities (required)
+// ---------------------------------------------------------------------------
 export const sampleServiceBEO: ServiceBEOData = {
   header: {
     beoNumber: 'BEO-2024-0892',
@@ -337,6 +389,7 @@ export const sampleServiceBEO: ServiceBEOData = {
     clientName: 'Victoria Whitmore & David Chen',
     venue: 'The Conservatory at Willowbrook',
   },
+
   timeline: [
     {
       time: '3:00 PM',
@@ -381,9 +434,10 @@ export const sampleServiceBEO: ServiceBEOData = {
       type: 'service',
     },
     {
-      time: '9:00 PM',
-      label: 'Bar Last Call',
-      type: 'service',
+      time: '9:15 PM',
+      label: 'Cake Cutting',
+      sublabel: 'Coordinate with DJ & kitchen',
+      type: 'coordination',
     },
     {
       time: '10:00 PM',
@@ -398,208 +452,332 @@ export const sampleServiceBEO: ServiceBEOData = {
       type: 'breakdown',
     },
   ],
-  staffPositions: [
+
+  floorPlan: {
+    totalTables: 16,
+    totalSeats: 170,
+    layout: 'Rounds of 10 + elevated head table',
+    specialArrangements: [
+      'Head table elevated on platform — 20 seats',
+      'Table 1 has 2 wheelchair-accessible seats on aisle (west side)',
+      'Table 7 allergen-alert — dedicated service approach',
+      'Table 12 kids table — early service at 6:45 PM',
+      'Dance floor cleared from cocktail area after 8:30 PM',
+    ],
+  },
+
+  // staffPositioning (not staffPositions) — StaffPosition requires
+  // location, shiftStart, shiftEnd, responsibilities
+  staffPositioning: [
     {
       role: 'Event Captain',
       count: 1,
-      station: 'Floor Oversight',
-      startTime: '3:30 PM',
+      location: 'Floor Oversight',
+      shiftStart: '3:30 PM',
+      shiftEnd: '11:30 PM',
       responsibilities: [
         'Overall event coordination',
         'Guest relations and VIP management',
         'Coordinate with kitchen and bar',
         'Handle service flow and timing',
       ],
-      members: [{ name: 'Sarah Martinez', position: 'Lead Captain', station: 'Floor' }],
+      members: [{ name: 'Sarah Martinez', position: 'Lead Captain', section: 'Floor' }],
     },
     {
       role: 'Floor Captains',
       count: 2,
-      station: 'Dining & Cocktail Areas',
-      startTime: '3:45 PM',
+      location: 'Dining & Cocktail Areas',
+      shiftStart: '3:45 PM',
+      shiftEnd: '11:30 PM',
       responsibilities: [
         'Section oversight and quality control',
         'Server coordination and support',
         'Table management',
       ],
       members: [
-        { name: 'James Thompson', position: 'Captain', station: 'Main Dining Room' },
-        { name: 'Emily Chen', position: 'Captain', station: 'Cocktail Area' },
+        { name: 'James Thompson', position: 'Captain', section: 'Main Dining Room' },
+        { name: 'Emily Chen', position: 'Captain', section: 'Cocktail Area' },
       ],
     },
     {
       role: 'Servers',
       count: 10,
-      station: 'Table Service',
-      startTime: '4:00 PM',
-      notes: 'Table assignments provided at briefing. Each server covers 15 guests.',
+      location: 'Table Service',
+      shiftStart: '4:00 PM',
+      shiftEnd: '11:30 PM',
+      responsibilities: [
+        'Full table service for assigned section',
+        'Water, bread, and beverage maintenance',
+        'Allergen-aware plating and delivery',
+      ],
       members: [
-        { name: 'Michael R.', station: 'Tables 1-3' },
-        { name: 'Jessica L.', station: 'Tables 4-6' },
-        { name: 'David K.', station: 'Tables 7-9' },
-        { name: 'Amanda S.', station: 'Tables 10-12' },
-        { name: 'Chris P.', station: 'Tables 13-15' },
-        { name: 'Nicole W.', station: 'Floater' },
-        { name: 'Brandon T.', station: 'Floater' },
-        { name: 'Samantha H.', station: 'Cocktail Service' },
-        { name: 'Ryan M.', station: 'Cocktail Service' },
-        { name: 'Lauren B.', station: 'Cocktail Service' },
+        { name: 'Michael R.', section: 'Tables 1-3' },
+        { name: 'Jessica L.', section: 'Tables 4-6' },
+        { name: 'David K.', section: 'Tables 7-9' },
+        { name: 'Amanda S.', section: 'Tables 10-12' },
+        { name: 'Chris P.', section: 'Tables 13-15' },
+        { name: 'Nicole W.', section: 'Floater' },
+        { name: 'Brandon T.', section: 'Floater' },
+        { name: 'Samantha H.', section: 'Cocktail Service' },
+        { name: 'Ryan M.', section: 'Cocktail Service' },
+        { name: 'Lauren B.', section: 'Cocktail Service' },
       ],
     },
     {
       role: 'Bartenders',
       count: 3,
-      station: 'Bar Service',
-      startTime: '4:30 PM',
-      notes: 'Main bar (2 bartenders), Service bar (1 bartender)',
+      location: 'Bar Service',
+      shiftStart: '4:30 PM',
+      shiftEnd: '10:30 PM',
+      responsibilities: [
+        'Full bar and beverage service',
+        'Maintain bar cleanliness and stock',
+        'Last call at 10:00 PM',
+      ],
       members: [
-        { name: 'Alex Rivera', station: 'Main Bar' },
-        { name: 'Jordan Lee', station: 'Main Bar' },
-        { name: 'Casey Park', station: 'Service Bar' },
+        { name: 'Alex Rivera', section: 'Main Bar' },
+        { name: 'Jordan Lee', section: 'Main Bar' },
+        { name: 'Casey Park', section: 'Service Bar' },
       ],
     },
     {
       role: 'Bussers',
       count: 4,
-      station: 'Floor Support',
-      startTime: '4:15 PM',
-      responsibilities: ['Table clearing and resetting', 'Water and bread service', 'Support servers'],
+      location: 'Floor Support',
+      shiftStart: '4:15 PM',
+      shiftEnd: '11:30 PM',
+      responsibilities: [
+        'Table clearing and resetting',
+        'Water and bread service',
+        'Support servers',
+      ],
       members: [
-        { name: 'Team A', station: 'Tables 1-8' },
-        { name: 'Team B', station: 'Tables 9-15' },
+        { name: 'Team A', section: 'Tables 1-8' },
+        { name: 'Team B', section: 'Tables 9-15' },
       ],
     },
   ],
+
   guestManagement: {
     totalGuests: 150,
-    vipCount: 20,
-    seatingLayout: '15 rounds of 10, plus head table of 20. Cocktail area separate with lounge seating.',
-    flowPlan:
-      'Guests enter through main foyer, directed to cocktail area. At 6:00 PM, escort to dining room via east entrance. Dance floor opens after dessert.',
-    specialSeating: [
+    expectedArrival: '5:00 PM',
+    cocktailHour: true,
+    seatingStyle: 'plated',
+    specialNeeds: [
       {
-        table: 'Head Table',
-        guests: 20,
-        notes: 'Bride & Groom + wedding party. Elevated platform. VIP service priority.',
+        tableNumber: '7',
+        requirement: '2 guests with severe nut allergies — dedicated allergen-free plates and utensils required',
+        priority: 'critical',
       },
       {
-        table: 'Table 1',
-        guests: 10,
-        notes: 'Parents and grandparents. 2 wheelchair-accessible seats on aisle.',
+        tableNumber: '1',
+        requirement: '2 wheelchair-accessible seats on aisle (west side approach)',
+        priority: 'important',
       },
       {
-        table: 'Table 7',
-        guests: 10,
-        notes: 'ALLERGEN ALERT: 2 guests with severe nut allergies. Special plating required.',
+        tableNumber: '12',
+        requirement: 'Kids table — early meal service at 6:45 PM (15 min before adult mains)',
+        priority: 'important',
       },
       {
-        table: 'Table 12',
-        guests: 8,
-        notes: 'Kids table. Early meal service at 6:45 PM.',
-      },
-    ],
-  },
-  equipment: {
-    dining: [
-      {
-        category: 'Tables & Seating',
-        items: [
-          { name: 'Round Tables (60")', quantity: 15, location: 'Main Dining', setupTime: '3:00 PM' },
-          { name: 'Rectangular Tables (8ft)', quantity: 2, location: 'Head Table', setupTime: '3:00 PM' },
-          { name: 'Cocktail Tables (36")', quantity: 8, location: 'Cocktail Area', setupTime: '3:30 PM' },
-          { name: 'Chiavari Chairs - Gold', quantity: 160, location: 'Dining & Cocktail', setupTime: '3:00 PM' },
-        ],
+        guestName: 'Victoria Whitmore (Bride)',
+        requirement: 'Pescatarian — salmon option only',
+        priority: 'note',
       },
       {
-        category: 'Linens & China',
-        items: [
-          { name: 'Ivory Tablecloths (120")', quantity: 17, location: 'All Tables' },
-          { name: 'Champagne Runners', quantity: 17, location: 'All Tables' },
-          { name: 'Ivory Napkins', quantity: 170, location: 'Place Settings' },
-          { name: 'Gold Charger Plates', quantity: 160, location: 'Place Settings', notes: 'Rental' },
-        ],
-      },
-    ],
-    bar: [
-      {
-        category: 'Bar Equipment',
-        items: [
-          { name: 'Main Bar Setup', quantity: 1, location: 'North Wall', setupTime: '3:30 PM' },
-          { name: 'Service Bar', quantity: 1, location: 'Kitchen Access', setupTime: '3:30 PM' },
-          { name: 'Wine Glasses', quantity: 200, location: 'Bar Stations' },
-          { name: 'Champagne Flutes', quantity: 180, location: 'Bar Stations' },
-          { name: 'Rocks Glasses', quantity: 120, location: 'Bar Stations' },
-        ],
-      },
-    ],
-    decor: [
-      {
-        category: 'Specialty Items',
-        items: [
-          { name: 'Centerpiece Florals', quantity: 15, location: 'Guest Tables', setupTime: '4:00 PM', notes: 'Florist delivers' },
-          { name: 'Vintage Candlesticks', quantity: 50, location: 'All Tables', notes: 'Rental - handle with care' },
-          { name: 'Uplighting Units', quantity: 16, location: 'Perimeter', setupTime: '2:00 PM', notes: 'AV vendor' },
-          { name: 'Wireless Microphones', quantity: 2, location: 'Head Table', notes: 'Sound check at 4:30 PM' },
-        ],
+        guestName: 'David Chen (Groom)',
+        requirement: 'Prefers medium-rare protein preparation',
+        priority: 'note',
       },
     ],
   },
-  coordination: {
-    contactPerson: 'Victoria Whitmore',
-    contactPhone: '(555) 123-4567',
-    emergencyContacts: [
-      {
-        name: 'David Chen',
-        role: 'Co-Client',
-        phone: '(555) 234-5678',
-      },
-      {
-        name: 'Sarah Martinez',
-        role: 'Event Captain',
-        phone: '(555) 345-6789',
-      },
-      {
-        name: 'Venue Manager',
-        role: 'Emergency',
-        phone: '(555) 456-7890',
-      },
+
+  serviceFlow: [
+    {
+      time: '5:00 PM',
+      step: 'Cocktail Hour Service',
+      details: 'Pass appetizers throughout cocktail area. Bar opens. Maintain steady rotation of passed apps.',
+      staffInvolved: ['Event Captain', 'Servers (cocktail)', 'Bartenders'],
+      duration: '60 min',
+    },
+    {
+      time: '6:00 PM',
+      step: 'Escort Guests to Dining Room',
+      details: 'Direct guests to dining room via east entrance. Ensure all seats filled before first course.',
+      staffInvolved: ['Event Captain', 'Floor Captains', 'Servers'],
+      duration: '15 min',
+    },
+    {
+      time: '6:15 PM',
+      step: 'First Course Service',
+      details: 'Serve appetizer plates. Head table first, then remaining tables simultaneously by section.',
+      staffInvolved: ['All Servers', 'Bussers'],
+      duration: '45 min',
+    },
+    {
+      time: '7:00 PM',
+      step: 'Main Course Service',
+      details: 'Clear first course. Serve mains. Confirm dietary requirements with Table 7 before plating.',
+      staffInvolved: ['All Servers', 'Floor Captains', 'Bussers'],
+      duration: '60 min',
+    },
+    {
+      time: '7:45 PM',
+      step: 'Toasts & Speeches',
+      details: 'Pause table service. Ensure all champagne flutes filled before 7:45 PM. Resume after 8:00 PM.',
+      staffInvolved: ['Event Captain', 'Bartenders', 'Servers'],
+      duration: '15 min',
+    },
+    {
+      time: '8:00 PM',
+      step: 'Champagne Toast',
+      details: 'Pre-fill flutes at 7:50 PM. Distribute to all guests including vendors.',
+      staffInvolved: ['All Servers', 'Bartenders'],
+      duration: '10 min',
+    },
+    {
+      time: '8:15 PM',
+      step: 'Dessert Service',
+      details: 'Serve dessert plates. Begin clearing cocktail area for dance floor.',
+      staffInvolved: ['All Servers', 'Bussers'],
+      duration: '45 min',
+    },
+    {
+      time: '9:15 PM',
+      step: 'Cake Cutting Ceremony',
+      details: 'Coordinate with DJ for music cue. Kitchen pre-slices backup sheet cake.',
+      staffInvolved: ['Event Captain', 'Pastry Team'],
+      duration: '15 min',
+    },
+    {
+      time: '10:00 PM',
+      step: 'Bar Last Call',
+      details: 'Announce last call. Begin transitioning guests toward conclusion.',
+      staffInvolved: ['Bartenders', 'Event Captain'],
+      duration: '30 min',
+    },
+  ],
+
+  equipmentSetup: [
+    {
+      category: 'Tables & Seating',
+      location: 'Main Dining Room',
+      items: [
+        { item: 'Round Tables (60")', quantity: 15, setupTime: '3:00 PM' },
+        { item: 'Rectangular Tables (8ft) — Head Table', quantity: 2, setupTime: '3:00 PM' },
+        { item: 'Cocktail Tables (36")', quantity: 8, setupTime: '3:30 PM' },
+        { item: 'Chiavari Chairs - Gold', quantity: 170, setupTime: '3:00 PM' },
+      ],
+    },
+    {
+      category: 'Linens & China',
+      location: 'All Tables',
+      items: [
+        { item: 'Ivory Tablecloths (120")', quantity: 17 },
+        { item: 'Champagne Runners', quantity: 17 },
+        { item: 'Ivory Napkins', quantity: 170 },
+        { item: 'Gold Charger Plates', quantity: 170, notes: 'Rental — handle with care' },
+      ],
+    },
+    {
+      category: 'Bar Equipment',
+      location: 'Bar Stations',
+      items: [
+        { item: 'Main Bar Setup', quantity: 1, setupTime: '3:30 PM' },
+        { item: 'Service Bar', quantity: 1, setupTime: '3:30 PM' },
+        { item: 'Wine Glasses', quantity: 200 },
+        { item: 'Champagne Flutes', quantity: 180 },
+        { item: 'Rocks Glasses', quantity: 120 },
+      ],
+    },
+    {
+      category: 'Specialty & Decor',
+      location: 'Dining & Perimeter',
+      items: [
+        { item: 'Centerpiece Florals', quantity: 15, setupTime: '4:00 PM', notes: 'Florist delivers' },
+        { item: 'Vintage Candlesticks', quantity: 50, notes: 'Rental - handle with care' },
+        { item: 'Uplighting Units', quantity: 16, setupTime: '2:00 PM', notes: 'AV vendor setup' },
+        { item: 'Wireless Microphones', quantity: 2, notes: 'Sound check at 4:30 PM' },
+      ],
+    },
+  ],
+
+  barService: {
+    type: 'full-bar',
+    bartenders: 3,
+    locations: ['Main Bar — North Wall', 'Service Bar — Kitchen Access'],
+    specialRequests: [
+      'Signature cocktail: "Whitmore Blossom" (elderflower spritz)',
+      'Non-alcoholic option: sparkling water with citrus garnish',
+      'Champagne toast service at 8:00 PM for all 150 guests',
     ],
-    vendorCoordination: [
-      {
-        vendor: 'Elegant Blooms Florist',
-        contact: 'Linda Kim (555) 111-2222',
-        arrivalTime: '4:00 PM',
-        requirements: 'Access to service elevator. Needs 30 min setup time.',
-      },
-      {
-        vendor: 'SoundWave AV',
-        contact: 'Mike Stevens (555) 222-3333',
-        arrivalTime: '2:00 PM',
-        requirements: 'Power access to perimeter. Sound check at 4:30 PM.',
-      },
-      {
-        vendor: 'Premier Party Rentals',
-        contact: 'Tom Bradley (555) 333-4444',
-        arrivalTime: '2:30 PM',
-        requirements: 'Charger plates and specialty linens. Pickup next day by 10 AM.',
-      },
-      {
-        vendor: 'Memories Photography',
-        contact: 'Jessica Park (555) 444-5555',
-        arrivalTime: '4:30 PM',
-        requirements: 'Access to all areas including kitchen for behind-scenes shots.',
-      },
-    ],
-    criticalNotes: [
-      'Photographer will need brief kitchen access during cocktail hour',
-      'Cake cutting scheduled for 9:15 PM - coordinate with DJ and kitchen',
-      'Two guests at Table 1 require wheelchair accessibility',
-      'Vendor meals (12) to be served at 6:00 PM in green room',
-      'Client has requested classical music during dinner, upbeat after 8:30 PM',
-      'All toasts and speeches to occur between 7:45-8:00 PM',
-    ],
+    lastCall: '10:00 PM',
   },
-  serviceNotes: `SERVICE PRIORITIES:
+
+  vendorCoordination: [
+    {
+      vendorName: 'Elegant Blooms Florist',
+      contact: 'Linda Kim — (555) 111-2222',
+      arrivalTime: '4:00 PM',
+      setupArea: 'Main Dining Room — service elevator access required',
+      requirements: ['Service elevator access', '30 min setup time', 'Water source nearby'],
+      pointOfContact: 'Sarah Martinez (Event Captain)',
+    },
+    {
+      vendorName: 'SoundWave AV',
+      contact: 'Mike Stevens — (555) 222-3333',
+      arrivalTime: '2:00 PM',
+      setupArea: 'Perimeter & head table',
+      requirements: ['Power access to perimeter', 'Sound check at 4:30 PM', 'Coordinate DJ cues with captain'],
+      pointOfContact: 'Sarah Martinez (Event Captain)',
+    },
+    {
+      vendorName: 'Premier Party Rentals',
+      contact: 'Tom Bradley — (555) 333-4444',
+      arrivalTime: '2:30 PM',
+      setupArea: 'Staging area — service entrance',
+      requirements: ['Charger plates and specialty linens delivery', 'Pickup next day by 10 AM'],
+      pointOfContact: 'Venue Manager',
+    },
+    {
+      vendorName: 'Memories Photography',
+      contact: 'Jessica Park — (555) 444-5555',
+      arrivalTime: '4:30 PM',
+      setupArea: 'All areas including kitchen',
+      requirements: ['Brief kitchen access during cocktail hour', 'Access to all event areas'],
+      pointOfContact: 'Sarah Martinez (Event Captain)',
+    },
+  ],
+
+  // EmergencyContact requires onSite: boolean
+  emergencyContacts: [
+    {
+      name: 'Sarah Martinez',
+      role: 'Event Captain',
+      phone: '(555) 345-6789',
+      onSite: true,
+    },
+    {
+      name: 'Victoria Whitmore',
+      role: 'Client',
+      phone: '(555) 123-4567',
+      onSite: true,
+    },
+    {
+      name: 'David Chen',
+      role: 'Co-Client',
+      phone: '(555) 234-5678',
+      onSite: true,
+    },
+    {
+      name: 'Venue Manager',
+      role: 'Venue Emergency',
+      phone: '(555) 456-7890',
+      onSite: true,
+    },
+  ],
+
+  specialInstructions: `SERVICE PRIORITIES:
 
 1. VIP SERVICE: Head table receives priority service. All courses served first.
 
