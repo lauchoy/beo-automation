@@ -580,7 +580,7 @@ export class AgentOrchestrator {
   public clearHistory(olderThan?: Date): void {
     if (olderThan) {
       const cutoffTime = olderThan.getTime();
-      for (const [id, result] of this.executionHistory.entries()) {
+      for (const [id, result] of Array.from(this.executionHistory.entries())) {
         const resultTime = new Date(result.startTime).getTime();
         if (resultTime < cutoffTime) {
           this.executionHistory.delete(id);
@@ -603,7 +603,7 @@ export class AgentOrchestrator {
   }> {
     const agentHealth: Record<string, { healthy: boolean; message?: string }> = {};
 
-    for (const [name, entry] of this.agents.entries()) {
+    for (const [name, entry] of Array.from(this.agents.entries())) {
       try {
         agentHealth[name] = await entry.instance.healthCheck();
       } catch (error) {
