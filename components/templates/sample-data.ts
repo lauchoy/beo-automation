@@ -28,7 +28,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
         allergens: ['shellfish', 'dairy'],
         portionSize: '3 scallops per guest',
         cookTime: '4-5 min',
-        cookingTemperature: 'High heat',
+        cookTemp: 'High heat',
         station: 'Sauté',
         prepInstructions: [
           'Pat scallops dry and season with salt and white pepper',
@@ -66,7 +66,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
         allergens: ['gluten'],
         portionSize: '7 oz breast per guest',
         cookTime: '18-22 min',
-        cookingTemperature: '425°F',
+        cookTemp: '425°F',
         station: 'Grill/Oven',
         prepInstructions: [
           'Brine chicken breasts 4-6 hours in herb salt solution',
@@ -85,7 +85,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
         allergens: ['fish', 'dairy'],
         portionSize: '6 oz fillet per guest',
         cookTime: '8-10 min',
-        cookingTemperature: 'Medium-high heat',
+        cookTemp: 'Medium-high heat',
         station: 'Sauté',
         prepInstructions: [
           'Portion salmon fillets, check for pin bones',
@@ -104,7 +104,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
         allergens: ['gluten', 'eggs'],
         portionSize: '1 wellington per guest',
         cookTime: '25-30 min',
-        cookingTemperature: '400°F',
+        cookTemp: '400°F',
         station: 'Pastry/Oven',
         prepInstructions: [
           'Roast vegetables until tender',
@@ -142,7 +142,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
         allergens: [],
         portionSize: '4 oz per guest',
         cookTime: '35-40 min',
-        cookingTemperature: '425°F',
+        cookTemp: '425°F',
         station: 'Roast',
         prepInstructions: [
           'Halve fingerling potatoes lengthwise',
