@@ -49,6 +49,7 @@ export interface MenuItem {
   portionSize?: string;
   cookTime?: string;
   cookTemp?: string;
+  cookingTemperature?: string;
   prepInstructions: string[];
   scalingNotes?: string;
   station?: string;
@@ -509,12 +510,12 @@ const KitchenMenuItem: React.FC<{ item: MenuItem }> = ({ item }) => {
               <span className="font-medium">{item.cookTime}</span>
             </div>
           )}
-          {item.cookTemp && (
+          {(item.cookTemp || item.cookingTemperature) && (
             <div>
               <span className="text-xs uppercase tracking-wider text-muted-foreground block">
                 Temperature
               </span>
-              <span className="font-medium">{item.cookTemp}</span>
+              <span className="font-medium">{item.cookTemp ?? item.cookingTemperature}</span>
             </div>
           )}
           {item.holdingTemp && (
