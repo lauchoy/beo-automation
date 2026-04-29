@@ -17,8 +17,22 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [
-        200,
-        260
+        180,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const now = new Date();\nconst runSeed = `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`;\nconst sessionId = `rosalynn-${runSeed}`;\nconst notionDatabaseId = process.env.NOTION_EVENT_DB_ID || '';\nconst statusProperty = process.env.NOTION_STATUS_PROPERTY || 'Workflow Status';\nconst readyValue = process.env.NOTION_READY_STATUS || 'Ready to Generate';\nconst pageSize = Number(process.env.NOTION_READY_PAGE_SIZE || 100);\n\nreturn [{\n  json: {\n    runStartedAt: now.toISOString(),\n    sessionId,\n    fetchReadyEventsPayload: {\n      session_id: sessionId,\n      sync_response_to_workbench: false,\n      current_step: 'FETCH_READY_EVENTS',\n      tools: [\n        {\n          tool_slug: 'NOTION_QUERY_DATABASE_WITH_FILTER',\n          arguments: {\n            database_id: notionDatabaseId,\n            page_size: pageSize,\n            filter: {\n              property: statusProperty,\n              select: { equals: readyValue }\n            },\n            sorts: [\n              { timestamp: 'last_edited_time', direction: 'ascending' }\n            ]\n          }\n        }\n      ]\n    }\n  }\n}];"
+      },
+      "id": "init-run-context",
+      "name": "Init Run Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        280
       ]
     },
     {
@@ -27,15 +41,38 @@
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
-        "jsonBody": "={{$json.fetchReadyEventsPayload}}"
+        "jsonBody": "={{$json.fetchReadyEventsPayload}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.COMPOSIO_API_KEY}}"
+            }
+          ]
+        }
       },
       "id": "fetch-ready-events",
       "name": "Fetch Ready Events",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        460,
-        260
+        620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $json;\n\nconst tryArray = (value) => (Array.isArray(value) ? value : []);\n\nconst candidates = [\n  raw?.data?.results,\n  raw?.data?.toolsOutput?.[0]?.data?.results,\n  raw?.data?.tools_output?.[0]?.data?.results,\n  raw?.data?.tool_results?.[0]?.data?.results,\n  raw?.data?.response?.[0]?.data?.results,\n  raw?.results\n];\n\nconst rows = candidates.find((value) => Array.isArray(value)) || [];\n\nconst getRichText = (arr) => Array.isArray(arr)\n  ? arr.map((item) => item?.plain_text || '').join('').trim()\n  : '';\n\nconst getSelect = (value) => value?.name || '';\n\nconst normalized = rows.map((row) => {\n  const props = row?.properties || {};\n  const eventId = getRichText(props['Event ID']?.rich_text) || row?.id || '';\n  const versionRaw = props['Version']?.number;\n  const version = Number.isFinite(versionRaw) ? versionRaw : 1;\n\n  return {\n    eventId,\n    rowId: row?.id || '',\n    version,\n    actorRole: getSelect(props['Actor Role']?.select) || 'system',\n    eventName: getRichText(props['Event Name']?.title) || getRichText(props['Event Name']?.rich_text),\n    clientName: getRichText(props['Client Name']?.rich_text),\n    eventDate: props['Event Date']?.date?.start || '',\n    kitchenEmail: props['Kitchen Email']?.email || '',\n    serviceEmail: props['Service Email']?.email || '',\n    clientEmail: props['Client Email']?.email || '',\n    payload: row\n  };\n});\n\nreturn normalized.map((event) => ({ json: event }));"
+      },
+      "id": "normalize-ready-events",
+      "name": "Normalize Ready Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        280
       ]
     },
     {
@@ -47,22 +84,152 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        700,
-        260
+        1080,
+        280
       ]
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const event = $json;\nconst runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;\nconst version = Number(event.version || 1);\n\nconst dispatches = [\n  {\n    audience: 'kitchen',\n    recipientEmail: event.kitchenEmail,\n    documentUrl: event.kitchenPdfUrl,\n    documentAudience: 'kitchen',\n    documentVersion: version\n  },\n  {\n    audience: 'service',\n    recipientEmail: event.serviceEmail,\n    documentUrl: event.servicePdfUrl,\n    documentAudience: 'service',\n    documentVersion: version\n  },\n  {\n    audience: 'client',\n    recipientEmail: event.clientEmail,\n    documentUrl: event.clientPdfUrl,\n    documentAudience: 'client',\n    documentVersion: version\n  }\n];\n\nreturn [{\n  json: {\n    eventId: event.eventId,\n    runId,\n    version,\n    actorRole: event.actorRole || 'system',\n    dispatches,\n    event\n  }\n}];"
+        "jsCode": "const now = new Date();\nconst timestamp = now.toISOString().replace(/[-:TZ]/g, '').slice(0, 14);\nconst runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;\nconst version = Number($json.version || 1);\nconst eventId = $json.eventId || `evt-${Date.now()}`;\n\nconst renderJobs = [\n  {\n    audience: 'kitchen',\n    templateId: process.env.CARBONE_TEMPLATE_KITCHEN_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_kitchen_${timestamp}.pdf`\n  },\n  {\n    audience: 'service',\n    templateId: process.env.CARBONE_TEMPLATE_SERVICE_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_service_${timestamp}.pdf`\n  },\n  {\n    audience: 'client',\n    templateId: process.env.CARBONE_TEMPLATE_CLIENT_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_client_${timestamp}.pdf`\n  }\n];\n\nconst recipients = {\n  kitchen: $json.kitchenEmail,\n  service: $json.serviceEmail,\n  client: $json.clientEmail\n};\n\nreturn [{\n  json: {\n    ...$json,\n    eventId,\n    version,\n    runId,\n    renderJobs,\n    recipients\n  }\n}];"
+      },
+      "id": "build-render-plan",
+      "name": "Build Render Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/guarded-action",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, action: 'ready_to_generate', actorRole: $json.actorRole || 'system' } }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WORKFLOW_INTERNAL_TOKEN}}"
+            }
+          ]
+        }
+      },
+      "id": "authorize-ready-to-generate",
+      "name": "Authorize Ready To Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $json.renderJobs[0].templateId}}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
+            },
+            {
+              "name": "carbone-version",
+              "value": "5"
+            }
+          ]
+        },
+        "jsonBody": "={{ { data: { event: $json.payload, audience: 'kitchen', version: $json.version }, convertTo: 'pdf' } }}"
+      },
+      "id": "render-kitchen-pdf",
+      "name": "Render Kitchen PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $node['Build Render Plan'].json.renderJobs[1].templateId}}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
+            },
+            {
+              "name": "carbone-version",
+              "value": "5"
+            }
+          ]
+        },
+        "jsonBody": "={{ { data: { event: $node['Build Render Plan'].json.payload, audience: 'service', version: $node['Build Render Plan'].json.version }, convertTo: 'pdf' } }}"
+      },
+      "id": "render-service-pdf",
+      "name": "Render Service PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1960,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $node['Build Render Plan'].json.renderJobs[2].templateId}}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
+            },
+            {
+              "name": "carbone-version",
+              "value": "5"
+            }
+          ]
+        },
+        "jsonBody": "={{ { data: { event: $node['Build Render Plan'].json.payload, audience: 'client', version: $node['Build Render Plan'].json.version }, convertTo: 'pdf' } }}"
+      },
+      "id": "render-client-pdf",
+      "name": "Render Client PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2180,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const baseCarboneUrl = process.env.CARBONE_API_BASE_URL || 'https://api.carbone.io';\nconst plan = $items('Build Render Plan', 0, 0)[0]?.json || $json;\nconst initContext = $items('Init Run Context', 0, 0)[0]?.json || {};\n\nconst kitchenRender = $items('Render Kitchen PDF', 0, 0)[0]?.json?.data?.renderId || '';\nconst serviceRender = $items('Render Service PDF', 0, 0)[0]?.json?.data?.renderId || '';\nconst clientRender = $items('Render Client PDF', 0, 0)[0]?.json?.data?.renderId || '';\n\nconst jobByAudience = Object.fromEntries((plan.renderJobs || []).map((job) => [job.audience, job]));\n\nconst toDoc = (audience, renderId) => ({\n  audience,\n  recipientEmail: plan.recipients?.[audience] || '',\n  documentUrl: `${baseCarboneUrl}/render/${renderId}?download=true`,\n  documentAudience: audience,\n  documentVersion: plan.version,\n  filename: jobByAudience[audience]?.filename || `${plan.eventId}_${audience}.pdf`\n});\n\nconst dispatches = [\n  toDoc('kitchen', kitchenRender),\n  toDoc('service', serviceRender),\n  toDoc('client', clientRender)\n].filter((entry) => entry.recipientEmail && entry.documentUrl.includes('/render/'));\n\nconst buildAudienceBody = (entry) => [\n  `Event ${plan.eventId} is ready (v${plan.version}).`,\n  `Audience: ${entry.audience}.`,\n  '',\n  `Document: ${entry.documentUrl}`,\n  '',\n  'This link is generated from Carbone and should be consumed promptly.'\n].join('\\\\n');\n\nconst sendEmailPayload = {\n  session_id: process.env.COMPOSIO_EMAIL_SESSION_ID || initContext.sessionId || '',\n  sync_response_to_workbench: false,\n  current_step: 'SEND_AUDIENCE_EMAILS',\n  tools: dispatches.map((entry) => ({\n    tool_slug: 'GMAIL_SEND_EMAIL',\n    arguments: {\n      recipient_email: entry.recipientEmail,\n      subject: `[BEO ${plan.eventId}] ${entry.audience} packet v${plan.version}`,\n      body: buildAudienceBody(entry),\n      is_html: false\n    }\n  }))\n};\n\nreturn [{\n  json: {\n    ...plan,\n    dispatches,\n    sendEmailPayload\n  }\n}];"
       },
       "id": "build-dispatch-payload",
       "name": "Build Dispatch Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        960,
-        260
+        2400,
+        280
       ]
     },
     {
@@ -78,6 +245,15 @@
               "responseFormat": "json"
             }
           }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WORKFLOW_INTERNAL_TOKEN}}"
+            }
+          ]
         }
       },
       "id": "recipient-mismatch-guard",
@@ -85,8 +261,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1220,
-        260
+        2620,
+        280
       ]
     },
     {
@@ -105,8 +281,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1460,
-        260
+        2840,
+        280
       ]
     },
     {
@@ -115,29 +291,50 @@
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
-        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, status: 'Error', message: 'Dispatch blocked by recipient mismatch guard', metadata: { deadLetterId: $json.deadLetter?.id } } }}"
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, status: 'Error', message: 'Dispatch blocked by recipient mismatch guard', metadata: { deadLetterId: $json.deadLetter?.id } } }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WORKFLOW_INTERNAL_TOKEN}}"
+            }
+          ]
+        }
       },
       "id": "mark-error",
       "name": "Mark Error",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1700,
-        100
+        3060,
+        120
       ]
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "// Placeholder: replace with Carbone render + audience-specific send nodes.\nreturn [{ json: { ...$json, sendResult: 'sent' } }];"
+        "url": "={{$env.COMPOSIO_MULTI_EXECUTE_URL}}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{$node['Build Dispatch Payload'].json.sendEmailPayload}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.COMPOSIO_API_KEY}}"
+            }
+          ]
+        }
       },
       "id": "send-emails",
       "name": "Send Emails",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        1700,
-        360
+        3060,
+        420
       ]
     },
     {
@@ -146,37 +343,40 @@
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
-        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, status: 'Generated', message: 'BEO versions generated and delivered' } }}"
+        "jsonBody": "={{ { eventId: $node['Build Dispatch Payload'].json.eventId, runId: $node['Build Dispatch Payload'].json.runId, status: 'Generated', message: 'BEO versions rendered and audience emails sent', metadata: { version: $node['Build Dispatch Payload'].json.version, documents: $node['Build Dispatch Payload'].json.dispatches.map((d) => ({ audience: d.audience, url: d.documentUrl, filename: d.filename })) } } }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WORKFLOW_INTERNAL_TOKEN}}"
+            }
+          ]
+        }
       },
       "id": "mark-generated",
       "name": "Mark Generated",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1940,
-        360
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/guarded-action",
-        "method": "POST",
-        "sendBody": true,
-        "contentType": "json",
-        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, action: 'ready_to_generate', actorRole: $json.actorRole } }}"
-      },
-      "id": "authorize-ready-to-generate",
-      "name": "Authorize Ready To Generate",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1090,
-        120
+        3280,
+        420
       ]
     }
   ],
   "connections": {
     "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Init Run Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Run Context": {
       "main": [
         [
           {
@@ -191,6 +391,17 @@
       "main": [
         [
           {
+            "node": "Normalize Ready Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Ready Events": {
+      "main": [
+        [
+          {
             "node": "Split Events",
             "type": "main",
             "index": 0
@@ -199,6 +410,61 @@
       ]
     },
     "Split Events": {
+      "main": [
+        [
+          {
+            "node": "Build Render Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Render Plan": {
+      "main": [
+        [
+          {
+            "node": "Authorize Ready To Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authorize Ready To Generate": {
+      "main": [
+        [
+          {
+            "node": "Render Kitchen PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Kitchen PDF": {
+      "main": [
+        [
+          {
+            "node": "Render Service PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Service PDF": {
+      "main": [
+        [
+          {
+            "node": "Render Client PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Client PDF": {
       "main": [
         [
           {
@@ -213,7 +479,7 @@
       "main": [
         [
           {
-            "node": "Authorize Ready To Generate",
+            "node": "Recipient Mismatch Guard",
             "type": "main",
             "index": 0
           }
@@ -254,17 +520,6 @@
         [
           {
             "node": "Mark Generated",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Authorize Ready To Generate": {
-      "main": [
-        [
-          {
-            "node": "Recipient Mismatch Guard",
             "type": "main",
             "index": 0
           }
