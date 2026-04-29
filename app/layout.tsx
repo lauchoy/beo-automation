@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${editorial.variable} ${body.variable}`}>
-      <body className="font-sans antialiased">
+      <body className="antialiased">
         <div className="relative min-h-screen overflow-hidden bg-stone-100 text-stone-900">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_18%,rgba(19,91,96,0.14),transparent_34%),radial-gradient(circle_at_88%_3%,rgba(188,147,86,0.16),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.55),rgba(244,238,224,0.7))]" />
 
