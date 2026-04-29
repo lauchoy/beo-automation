@@ -17,7 +17,7 @@
     "role-policy:seed": "node scripts/seed-role-policy-presets.mjs"
   },
   "dependencies": {
-    "next": "14.2.16",
+    "next": "16.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "airtable": "^0.12.2",
