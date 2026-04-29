@@ -559,33 +559,3 @@ export function isKitchenBEOData(data: BEOData): data is KitchenBEOData {
 export function isServiceBEOData(data: BEOData): data is ServiceBEOData {
   return 'timeline' in data && 'floorPlan' in data;
 }
-
-// ============================================================================
-// Exports
-// ============================================================================
-
-export type {
-  KitchenBEOData,
-  ServiceBEOData,
-  BEOData,
-  BEOType,
-};
-
-export {
-  KitchenBEODataSchema,
-  ServiceBEODataSchema,
-  BEOHeaderSchema,
-  MenuItemSchema,
-  PrepTaskSchema,
-  EquipmentCategorySchema,
-  StaffAssignmentSchema,
-  TimelineEventSchema,
-  StaffPositionSchema,
-  SpecialNeedSchema,
-  ServiceStepSchema,
-  SetupCategorySchema,
-  BarServiceSchema,
-  VendorInfoSchema,
-  EmergencyContactSchema,
-  AllergenSchema,
-};

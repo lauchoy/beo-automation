@@ -15,6 +15,7 @@ export const sampleKitchenBEO: KitchenBEOData = {
     eventTime: '5:00 PM – 11:00 PM',
     clientName: 'Victoria Whitmore & David Chen',
     venue: 'The Conservatory at Willowbrook Estate',
+    guestCount: 180,
   },
   guests: {
     total: 180,

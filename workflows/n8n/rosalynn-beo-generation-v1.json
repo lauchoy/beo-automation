@@ -1,0 +1,278 @@
+{
+  "name": "rosalynn-beo-generation-v1",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.COMPOSIO_MULTI_EXECUTE_URL}}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{$json.fetchReadyEventsPayload}}"
+      },
+      "id": "fetch-ready-events",
+      "name": "Fetch Ready Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1
+      },
+      "id": "split-events",
+      "name": "Split Events",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        700,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const event = $json;\nconst runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;\nconst version = Number(event.version || 1);\n\nconst dispatches = [\n  {\n    audience: 'kitchen',\n    recipientEmail: event.kitchenEmail,\n    documentUrl: event.kitchenPdfUrl,\n    documentAudience: 'kitchen',\n    documentVersion: version\n  },\n  {\n    audience: 'service',\n    recipientEmail: event.serviceEmail,\n    documentUrl: event.servicePdfUrl,\n    documentAudience: 'service',\n    documentVersion: version\n  },\n  {\n    audience: 'client',\n    recipientEmail: event.clientEmail,\n    documentUrl: event.clientPdfUrl,\n    documentAudience: 'client',\n    documentVersion: version\n  }\n];\n\nreturn [{\n  json: {\n    eventId: event.eventId,\n    runId,\n    version,\n    actorRole: event.actorRole || 'system',\n    dispatches,\n    event\n  }\n}];"
+      },
+      "id": "build-dispatch-payload",
+      "name": "Build Dispatch Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/dispatch",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, version: $json.version, dispatches: $json.dispatches } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "recipient-mismatch-guard",
+      "name": "Recipient Mismatch Guard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1220,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.blocked || false}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "if-guard-blocked",
+      "name": "IF Guard Blocked",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/terminal-status",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, status: 'Error', message: 'Dispatch blocked by recipient mismatch guard', metadata: { deadLetterId: $json.deadLetter?.id } } }}"
+      },
+      "id": "mark-error",
+      "name": "Mark Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Placeholder: replace with Carbone render + audience-specific send nodes.\nreturn [{ json: { ...$json, sendResult: 'sent' } }];"
+      },
+      "id": "send-emails",
+      "name": "Send Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/terminal-status",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, status: 'Generated', message: 'BEO versions generated and delivered' } }}"
+      },
+      "id": "mark-generated",
+      "name": "Mark Generated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1940,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.INTERNAL_API_BASE_URL}}/api/workflows/guarded-action",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { eventId: $json.eventId, runId: $json.runId, action: 'ready_to_generate', actorRole: $json.actorRole } }}"
+      },
+      "id": "authorize-ready-to-generate",
+      "name": "Authorize Ready To Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1090,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Ready Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Ready Events": {
+      "main": [
+        [
+          {
+            "node": "Split Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Events": {
+      "main": [
+        [
+          {
+            "node": "Build Dispatch Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Dispatch Payload": {
+      "main": [
+        [
+          {
+            "node": "Authorize Ready To Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recipient Mismatch Guard": {
+      "main": [
+        [
+          {
+            "node": "IF Guard Blocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Guard Blocked": {
+      "main": [
+        [
+          {
+            "node": "Mark Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Emails": {
+      "main": [
+        [
+          {
+            "node": "Mark Generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authorize Ready To Generate": {
+      "main": [
+        [
+          {
+            "node": "Recipient Mismatch Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

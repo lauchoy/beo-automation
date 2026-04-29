@@ -5,7 +5,12 @@
  * This replaces React component rendering to avoid Next.js 14 compatibility issues.
  */
 
-import type { KitchenBEOData, MenuItem, AllergenKey } from '@/components/templates/types';
+import type {
+  KitchenBEOData,
+  MenuItem,
+  AllergenKey,
+  AllergenType,
+} from '@/components/templates/types';
 
 /**
  * Allergen icon SVG map
@@ -23,9 +28,9 @@ const allergenIcons: Record<AllergenKey, string> = {
 /**
  * Get allergen badges HTML
  */
-function getAllergenBadges(allergens: Record<string, boolean>): string {
-  const activeAllergens = Object.entries(allergens)
-    .filter(([_, active]) => active)
+function getAllergenBadges(allergens: AllergenType): string {
+  const activeAllergens = Object.entries(allergens ?? {})
+    .filter(([, active]) => Boolean(active))
     .map(([key]) => key as AllergenKey);
 
   if (activeAllergens.length === 0) return '';
