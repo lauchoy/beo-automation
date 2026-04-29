@@ -1,19 +1,61 @@
-name: CI — Playwright E2E
+name: ci
 
 on:
   pull_request:
     branches:
       - main
-      - 'release/**'
+      - "release/**"
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ──────────────────────────────────────────────────────────────────────────
-  # Job 1: Wait for Vercel preview deployment to become ready
-  # ──────────────────────────────────────────────────────────────────────────
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (if configured)
+        run: |
+          if [ -f .eslintrc ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f .eslintrc.cjs ] || [ -f .eslintrc.yaml ] || [ -f .eslintrc.yml ] || [ -f eslint.config.js ] || [ -f eslint.config.mjs ]; then
+            npm run lint
+          else
+            echo "Skipping lint: no ESLint config file found."
+          fi
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Validate n8n workflow contracts
+        run: npm run workflow:validate
+
+      - name: Build
+        run: npm run build
+
   wait-for-vercel:
     name: Wait for Vercel Preview
     runs-on: ubuntu-latest
@@ -25,14 +67,11 @@ jobs:
         uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300   # 5 minutes max wait
-          check_interval: 10 # poll every 10s
+          max_timeout: 300
+          check_interval: 10
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
-  # ──────────────────────────────────────────────────────────────────────────
-  # Job 2: Run Playwright E2E tests against the live Vercel preview URL
-  # ──────────────────────────────────────────────────────────────────────────
   playwright-e2e:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
@@ -40,13 +79,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Node dependencies
         run: npm ci
@@ -57,9 +96,8 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
         env:
-          CI: 'true'
+          CI: "true"
           PLAYWRIGHT_BASE_URL: ${{ needs.wait-for-vercel.outputs.preview_url }}
-          # Pass any secrets the API routes need at runtime
           AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
           AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
 
