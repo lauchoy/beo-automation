@@ -8,13 +8,14 @@
  */
 
 import { generatePDFToFile } from '../lib/pdf-generator';
-import { KitchenBEO, type KitchenBEOData } from '../components/templates/KitchenBEO';
-import { ServiceBEO, type ServiceBEOData } from '../components/templates/ServiceBEO';
-import React from 'react';
+import type {
+  KitchenBEOData as PDFKitchenBEOData,
+  ServiceBEOData as PDFServiceBEOData,
+} from '../components/templates/types';
 import path from 'path';
 
 // Sample Kitchen BEO Data
-const sampleKitchenBEO: KitchenBEOData = {
+const sampleKitchenBEO = {
   header: {
     beoNumber: 'BEO-2024-TEST-K001',
     eventName: 'Johnson-Smith Wedding Reception',
@@ -22,6 +23,7 @@ const sampleKitchenBEO: KitchenBEOData = {
     eventTime: '6:00 PM - 11:00 PM',
     clientName: 'Emily Johnson & Michael Smith',
     venue: 'Grand Ballroom - East Wing',
+    guestCount: 150,
   },
   guests: {
     total: 150,
@@ -186,7 +188,7 @@ Cake cutting at 9:15 PM - coordinate with event manager`,
 };
 
 // Sample Service BEO Data
-const sampleServiceBEO: ServiceBEOData = {
+const sampleServiceBEOBasic = {
   header: {
     beoNumber: 'BEO-2024-TEST-S001',
     eventName: 'Johnson-Smith Wedding Reception',
@@ -348,7 +350,7 @@ const sampleServiceBEO: ServiceBEOData = {
 };
 
 // Sample Service BEO Data
-const sampleServiceBEO: ServiceBEOData = {
+const sampleServiceBEO = {
   header: {
     beoNumber: 'BEO-2024-TEST-S001',
     eventName: 'Johnson-Smith Wedding Reception',
@@ -706,7 +708,8 @@ async function testPDFGeneration() {
   // Test 1: Kitchen BEO PDF
   console.log('📄 Test 1: Generating Kitchen BEO PDF...');
   const kitchenResult = await generatePDFToFile({
-    component: React.createElement(KitchenBEO, { data: sampleKitchenBEO }),
+    type: 'kitchen',
+    data: sampleKitchenBEO as unknown as PDFKitchenBEOData,
     outputPath: path.join(outputDir, 'kitchen-beo-test.pdf'),
   });
 
@@ -723,7 +726,8 @@ async function testPDFGeneration() {
   // Test 2: Service BEO PDF
   console.log('📄 Test 2: Generating Service BEO PDF...');
   const serviceResult = await generatePDFToFile({
-    component: React.createElement(ServiceBEO, { data: sampleServiceBEO }),
+    type: 'service',
+    data: sampleServiceBEO as unknown as PDFServiceBEOData,
     outputPath: path.join(outputDir, 'service-beo-test.pdf'),
   });
 
