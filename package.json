@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "test:pdf": "tsx scripts/test-pdf-generation.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "workflow:validate": "bash scripts/validate-n8n-workflows.sh",
+    "role-policy:seed": "node scripts/seed-role-policy-presets.mjs"
   },
   "dependencies": {
     "next": "14.2.16",
@@ -38,6 +41,7 @@
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "vitest": "^2.1.9"
   }
 }
