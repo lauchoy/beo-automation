@@ -222,6 +222,11 @@ beo-automation/
 - `GET /api/workflows` - List all workflows
 - `GET /api/workflows?beoId=123` - Filter by BEO
 - `POST /api/workflows` - Create new workflow
+- `POST /api/workflows/guarded-action` - Role guard for sensitive actions (`ready_to_generate`, `resend_latest_version`, `view_version_history`, dead-letter operations)
+- `POST /api/workflows/dispatch` - Recipient mismatch guard before send
+- `POST /api/workflows/terminal-status` - Terminal status write with dead-letter fallback
+- `GET /api/workflows/dead-letters` - Inspect dead-letter queue
+- `POST /api/workflows/dead-letters/replay` - Replay/resolve dead-letter entries
 
 ### PDF Generation (NEW)
 - `POST /api/beo/generate-pdf` - Generate BEO PDF
@@ -255,7 +260,25 @@ npm run build
 npm start
 ```
 
-## 🔗 Integration
+## Integration Details
+
+### Seed Role Policy Presets
+
+Print preset for an environment:
+
+```bash
+npm run role-policy:seed -- --env production
+```
+
+Write/update preset directly in an env file:
+
+```bash
+npm run role-policy:seed -- --env staging --write .env.local
+```
+
+### n8n Workflow Import Runbook
+
+- `docs/operations/n8n-import-checklist.md`
 
 ### Airtable
 The application connects to the Fine Dining Recipe Library base (`apprdOlzDhN9YSXJs`) to fetch and manage recipes. All Airtable operations are handled through the `lib/airtable-client.ts` module.

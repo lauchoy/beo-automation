@@ -11,6 +11,53 @@ export interface DopplerSecrets {
   environment_id: string;
 }
 
+interface DopplerSecretValue {
+  computed?: string;
+  raw?: string;
+}
+
+type DopplerSecretsMap = Record<string, DopplerSecretValue | string | undefined>;
+
+export interface DopplerClient {
+  secrets: {
+    list(
+      project: string,
+      config: string
+    ): Promise<{ secrets?: unknown }>;
+    get(
+      project: string,
+      config: string,
+      name: string
+    ): Promise<{ value?: unknown }>;
+  };
+}
+
+function extractSecretValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const secretValue = value as DopplerSecretValue;
+    if (typeof secretValue.computed === 'string') {
+      return secretValue.computed;
+    }
+    if (typeof secretValue.raw === 'string') {
+      return secretValue.raw;
+    }
+  }
+
+  return '';
+}
+
+function normalizeSecretsMap(value: unknown): DopplerSecretsMap {
+  if (value && typeof value === 'object') {
+    return value as DopplerSecretsMap;
+  }
+
+  return {};
+}
+
 /**
  * Fetch secrets from Doppler
  * @param project - Doppler project name
@@ -18,18 +65,17 @@ export interface DopplerSecrets {
  */
 export async function getDopplerSecrets(
   project: string = 'beo-automation',
-  config: string = 'dev'
+  config: string = 'dev',
+  client: DopplerClient = doppler
 ): Promise<DopplerSecrets> {
   try {
-    const secrets = await doppler.secrets.list({
-      project,
-      config,
-    });
+    const secretsResponse = await client.secrets.list(project, config);
+    const secrets = normalizeSecretsMap(secretsResponse.secrets);
 
     return {
-      AIRTABLE_TOKEN: secrets.AIRTABLE_TOKEN?.computed || '',
-      WARP_API_KEY: secrets.WARP_API_KEY?.computed || '',
-      environment_id: secrets.environment_id?.computed || '',
+      AIRTABLE_TOKEN: extractSecretValue(secrets.AIRTABLE_TOKEN),
+      WARP_API_KEY: extractSecretValue(secrets.WARP_API_KEY),
+      environment_id: extractSecretValue(secrets.environment_id),
     };
   } catch (error) {
     console.error('Error fetching Doppler secrets:', error);
@@ -43,16 +89,13 @@ export async function getDopplerSecrets(
 export async function getDopplerSecret(
   name: string,
   project: string = 'beo-automation',
-  config: string = 'dev'
+  config: string = 'dev',
+  client: DopplerClient = doppler
 ): Promise<string> {
   try {
-    const secret = await doppler.secrets.get({
-      project,
-      config,
-      name,
-    });
+    const secret = await client.secrets.get(project, config, name);
 
-    return secret.computed || '';
+    return extractSecretValue(secret.value);
   } catch (error) {
     console.error(`Error fetching secret ${name}:`, error);
     throw new Error(`Failed to fetch secret ${name} from Doppler`);
