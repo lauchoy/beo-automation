@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { DeadLetterReason, listDeadLetters } from '@/lib/reliability/dead-letter';
+import generationWorkflowArtifact from '@/workflows/n8n/rosalynn-beo-generation-v1.json';
+import deadLetterReconcileWorkflowArtifact from '@/workflows/n8n/rosalynn-beo-dead-letter-reconcile-v1.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,47 +70,41 @@ function nodeNamesFromParsedWorkflow(parsed: unknown): string[] {
     .filter(Boolean);
 }
 
-async function getWorkflowArtifactStatus(
-  id: string,
-  relativeFile: string,
-  requiredNodes: string[]
-): Promise<WorkflowArtifactStatus> {
+async function resolveWorkflowUpdatedAt(
+  relativeFile: string
+): Promise<string | null> {
   const absolutePath = path.join(process.cwd(), relativeFile);
 
   try {
-    const [raw, stats] = await Promise.all([
-      fs.readFile(absolutePath, 'utf8'),
-      fs.stat(absolutePath),
-    ]);
-
-    const parsed = JSON.parse(raw);
-    const nodeNames = nodeNamesFromParsedWorkflow(parsed);
-    const missingNodes = requiredNodes.filter(
-      (requiredNode) => !nodeNames.includes(requiredNode)
-    );
-
-    return {
-      id,
-      file: relativeFile,
-      exists: true,
-      nodeCount: nodeNames.length,
-      requiredNodes,
-      missingNodes,
-      contractReady: missingNodes.length === 0,
-      updatedAt: stats.mtime.toISOString(),
-    };
+    const stats = await fs.stat(absolutePath);
+    return stats.mtime.toISOString();
   } catch {
-    return {
-      id,
-      file: relativeFile,
-      exists: false,
-      nodeCount: 0,
-      requiredNodes,
-      missingNodes: requiredNodes,
-      contractReady: false,
-      updatedAt: null,
-    };
+    return null;
   }
+}
+
+async function getWorkflowArtifactStatus(
+  id: string,
+  relativeFile: string,
+  parsedWorkflow: unknown,
+  requiredNodes: string[]
+): Promise<WorkflowArtifactStatus> {
+  const nodeNames = nodeNamesFromParsedWorkflow(parsedWorkflow);
+  const missingNodes = requiredNodes.filter(
+    (requiredNode) => !nodeNames.includes(requiredNode)
+  );
+  const updatedAt = await resolveWorkflowUpdatedAt(relativeFile);
+
+  return {
+    id,
+    file: relativeFile,
+    exists: nodeNames.length > 0,
+    nodeCount: nodeNames.length,
+    requiredNodes,
+    missingNodes,
+    contractReady: missingNodes.length === 0,
+    updatedAt,
+  };
 }
 
 async function getDeadLetterCounts(): Promise<Record<DeadLetterReason, number>> {
@@ -135,6 +131,7 @@ export async function GET() {
         getWorkflowArtifactStatus(
           'generation',
           'workflows/n8n/rosalynn-beo-generation-v1.json',
+          generationWorkflowArtifact,
           [
             'Schedule Trigger',
             'Init Run Context',
@@ -154,6 +151,7 @@ export async function GET() {
         getWorkflowArtifactStatus(
           'dead-letter-reconcile',
           'workflows/n8n/rosalynn-beo-dead-letter-reconcile-v1.json',
+          deadLetterReconcileWorkflowArtifact,
           [
             'Schedule Trigger',
             'Fetch Dead Letters',
