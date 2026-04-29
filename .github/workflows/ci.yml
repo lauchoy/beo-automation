@@ -64,7 +64,7 @@ jobs:
     steps:
       - name: Wait for Vercel deployment
         id: vercel-url
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 300
