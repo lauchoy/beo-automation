@@ -14,7 +14,12 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "workflow:validate": "bash scripts/validate-n8n-workflows.sh",
-    "role-policy:seed": "node scripts/seed-role-policy-presets.mjs"
+    "role-policy:seed": "node scripts/seed-role-policy-presets.mjs",
+    "secrets:doctor": "bash scripts/doppler-secrets.sh doctor",
+    "secrets:init": "bash scripts/doppler-secrets.sh init",
+    "secrets:edit": "bash scripts/doppler-secrets.sh edit",
+    "secrets:pull": "bash scripts/doppler-secrets.sh pull",
+    "secrets:push": "bash scripts/doppler-secrets.sh push"
   },
   "dependencies": {
     "next": "14.2.16",

@@ -65,14 +65,21 @@ cd beo-automation
 # Install dependencies
 npm install
 
-# Configure environment (IMPORTANT: Never commit .env.local!)
-cp .env.example .env.local
-# Edit .env.local with your REAL credentials
-# The .env.example file contains only PLACEHOLDER values
+# Configure Doppler for this repo (one-time)
+doppler setup --project beo-automation --config dev --no-interactive
+
+# Create local editable secrets file (gitignored)
+npm run secrets:init
+npm run secrets:edit
+
+# Push local edits to Doppler
+npm run secrets:push
 
 # Start development server
-npm run dev
+doppler run -- npm run dev
 ```
+
+Local secrets file path: `.secrets/doppler.dev.env` (chmod `600`, gitignored).
 
 ### View BEO Templates
 
