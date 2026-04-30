@@ -192,6 +192,28 @@ export async function GET() {
       0
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    const workflowsForResponse = [generationWorkflow, reconcileWorkflow].map(
+      (workflow) =>
+        isProduction
+          ? {
+              ...workflow,
+              file: workflow.id,
+              requiredNodes: [],
+              missingNodes: [],
+            }
+          : workflow
+    );
+    const integrationsForResponse = integrations.map((integration) =>
+      isProduction
+        ? {
+            ...integration,
+            requiredEnv: [],
+            missingEnv: [],
+          }
+        : integration
+    );
+
     const workflowsReady =
       generationWorkflow.contractReady && reconcileWorkflow.contractReady;
 
@@ -202,12 +224,12 @@ export async function GET() {
       summary: {
         workflowsReady,
         configuredIntegrations,
-        totalIntegrations: integrations.length,
+        totalIntegrations: integrationsForResponse.length,
         totalDeadLetters,
       },
       deadLetters: deadLetterCounts,
-      workflows: [generationWorkflow, reconcileWorkflow],
-      integrations,
+      workflows: workflowsForResponse,
+      integrations: integrationsForResponse,
     });
   } catch (error) {
     console.error('Failed to build dashboard overview:', error);
