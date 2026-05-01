@@ -28,6 +28,10 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.secrets/
+*.doppler-fallback.json
+*.doppler-fallback.yaml
+*.doppler-fallback.env
 
 # vercel
 .vercel
@@ -35,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.gstack/
+
+# dead-letter local artifacts
+/data/dead-letter/*
+!/data/dead-letter/.gitkeep

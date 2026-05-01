@@ -8,7 +8,7 @@ This runbook is for importing and safely activating:
 ## 1) Preconditions
 
 1. Next.js API is reachable from n8n at `INTERNAL_API_BASE_URL`.
-2. Dead-letter storage is persistent on the API runtime (`DEAD_LETTER_DIR`).
+2. Dead-letter storage is persistent on the API runtime (`DEAD_LETTER_BACKEND=supabase` recommended for cloud).
 3. Composio endpoint and API key are available to n8n.
 4. Role policy is set (default or seeded override via `npm run role-policy:seed`).
 5. Internal workflow token is set on API runtime (`WORKFLOW_INTERNAL_TOKEN`) and in n8n credential.
@@ -20,10 +20,26 @@ This runbook is for importing and safely activating:
 | n8n | `INTERNAL_API_BASE_URL` | Yes | Base URL for `/api/workflows/*` guard, status, and dead-letter endpoints |
 | n8n | `COMPOSIO_MULTI_EXECUTE_URL` | Yes | URL used by `Fetch Ready Events` node |
 | n8n | `COMPOSIO_API_KEY` | Yes | Bearer/API key for Composio endpoint auth |
+| n8n | `NOTION_EVENT_DB_ID` | Yes | Notion event database ID used by `Init Run Context` query payload |
+| n8n | `NOTION_STATUS_PROPERTY` | Recommended | Notion status property name (default: `Workflow Status`) |
+| n8n | `NOTION_READY_STATUS` | Recommended | Notion status value to fetch (default: `Ready to Generate`) |
+| n8n | `NOTION_READY_PAGE_SIZE` | Optional | Ready-event fetch page size (default: `100`) |
+| n8n | `CARBONE_API_BASE_URL` | Optional | Used only when workflow builds renderId-based fallback download URLs |
+| n8n | `CARBONE_TEMPLATE_DEFAULT_ID` | Recommended | Default Carbone template ID used for all audiences when audience-specific IDs are absent |
+| n8n | `CARBONE_TEMPLATE_KITCHEN_ID` | Optional | Carbone template ID override for kitchen audience |
+| n8n | `CARBONE_TEMPLATE_SERVICE_ID` | Optional | Carbone template ID override for service audience |
+| n8n | `CARBONE_TEMPLATE_CLIENT_ID` | Optional | Carbone template ID override for client audience |
+| n8n | `COMPOSIO_EMAIL_SESSION_ID` | Optional | Fixed Composio session for `GMAIL_SEND_EMAIL` calls |
 | n8n | `WORKFLOW_INTERNAL_TOKEN` | Yes | Bearer token used on all `/api/workflows/*` API calls |
 | API runtime | `WORKFLOW_INTERNAL_TOKEN` | Yes | Shared token used to authenticate internal workflow calls |
 | API runtime | `WORKFLOW_CALLER_ROLE` | Yes | Trusted caller role for workflow authorization (`system` default) |
-| API runtime | `DEAD_LETTER_DIR` | Yes | Persistent JSONL dead-letter store |
+| API runtime | `DEAD_LETTER_BACKEND` | Yes | `file` or `supabase` dead-letter backend selector |
+| API runtime | `DEAD_LETTER_DIR` | Required for `file` backend | Persistent JSONL dead-letter store |
+| API runtime | `SUPABASE_URL` | Required for `supabase` backend | Supabase project URL |
+| API runtime | `SUPABASE_SERVICE_ROLE_KEY` | Required for `supabase` backend | Supabase service-role key for dead-letter R/W |
+| API runtime | `DEAD_LETTER_MAX_DB_MB` | Optional | Prune trigger threshold (default: `470`) |
+| API runtime | `DEAD_LETTER_TARGET_DB_MB` | Optional | Post-prune target (default: `430`) |
+| API runtime | `DEAD_LETTER_MAX_DELETE_BATCH` | Optional | Max rows deleted per prune loop (default: `2000`) |
 | API runtime | `WORKFLOW_ROLE_POLICY_OVERRIDES` | Optional | Override default role policy |
 | API runtime | `TERMINAL_STATUS_WEBHOOK_URL` | Optional | Real terminal status write target |
 | API runtime | `SIMULATE_TERMINAL_STATUS_FAILURE` | Optional | Set `true` only for failure-path drills |
@@ -43,6 +59,15 @@ This runbook is for importing and safely activating:
 
 ## 4) Import Steps
 
+Preferred (no manual JSON import):
+
+1. Set `N8N_API_BASE_URL` and `N8N_API_KEY` in your shell/runtime.
+2. Run `npm run workflow:sync:n8n` from this repo.
+3. Open each workflow in n8n and confirm credentials/variables resolve.
+4. Run manual tests before enabling schedules.
+
+Manual fallback:
+
 1. In n8n, import both JSON workflow files from `workflows/n8n/`.
 2. Open each HTTP Request node and assign credentials per mapping table below.
 3. Ensure all expression URLs resolve (no red expression errors).
@@ -56,14 +81,20 @@ This runbook is for importing and safely activating:
 | Node | Type | URL / Action | Credential | Expected Success | Failure Behavior |
 |---|---|---|---|---|---|
 | `Schedule Trigger` | Schedule Trigger | Every 5 min | n/a | Starts workflow | n/a |
+| `Init Run Context` | Code | Build deterministic Composio Notion query payload | n/a | Emits `sessionId` + `fetchReadyEventsPayload` | Script error fails run |
 | `Fetch Ready Events` | HTTP Request | `{{$env.COMPOSIO_MULTI_EXECUTE_URL}}` | `Composio API` | `200` with event items | Stop run; inspect Composio auth/payload |
+| `Normalize Ready Events` | Code | Normalize Composio response into event rows | n/a | Emits one item per event | Script error fails run |
 | `Split Events` | Split In Batches | One event per batch | n/a | Iterates items | Empty input ends cleanly |
-| `Build Dispatch Payload` | Code | Build `eventId/runId/version/dispatches` | n/a | Emits payload JSON | Script error fails run |
+| `Build Render Plan` | Code | Build `runId/version/renderJobs/recipients` | n/a | Emits per-event render plan | Script error fails run |
 | `Authorize Ready To Generate` | HTTP Request | `POST /api/workflows/guarded-action` (`ready_to_generate`) | `Internal Workflow API` | `200` with `authorized=true` | `401` missing/invalid token; `403` denied and written as `role_guard_blocked` dead-letter |
+| `Render Kitchen PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
+| `Render Service PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
+| `Render Client PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
+| `Build Dispatch Payload` | Code | Build dispatch envelope + `GMAIL_SEND_EMAIL` multi-execute payload | n/a | Emits `dispatches` + `sendEmailPayload` | Script error fails run |
 | `Recipient Mismatch Guard` | HTTP Request | `POST /api/workflows/dispatch` | `Internal Workflow API` | `200` with `blocked=false` | `401` missing/invalid token; `409` blocked and written as `recipient_mismatch_blocked` |
 | `IF Guard Blocked` | IF | Route on `blocked` | n/a | Branches correctly | Miswired condition sends wrong branch |
 | `Mark Error` | HTTP Request | `POST /api/workflows/terminal-status` (`Error`) | `Internal Workflow API` | `200` or `202` | `401` missing/invalid token; `202` means dead-letter fallback engaged |
-| `Send Emails` | Code placeholder | Replace with actual delivery path | n/a | Should emit send result | Placeholder currently no-op send |
+| `Send Emails` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`GMAIL_SEND_EMAIL`) | `Composio API` | `200` with tool execution results | Stop run; inspect Composio auth/tool args |
 | `Mark Generated` | HTTP Request | `POST /api/workflows/terminal-status` (`Generated`) | `Internal Workflow API` | `200` or `202` | `401` missing/invalid token; `202` means dead-letter fallback engaged |
 
 ## 5.2 `rosalynn-beo-dead-letter-reconcile-v1`
@@ -91,7 +122,8 @@ This runbook is for importing and safely activating:
 ## 7) Operational Guardrails
 
 - Never enable schedules until manual run is clean.
-- Keep `Send Emails` placeholder replaced before production enablement.
+- Validate Composio tool schemas used by `Fetch Ready Events` and `Send Emails` before first production run, and pin any changed argument names.
+- Carbone render links are one-time download resources by default. If long-lived links are required, insert a storage-upload node after render and before email send.
 - Keep role policy under change control:
   - Generate preset with `npm run role-policy:seed -- --env <env>`
   - Apply to runtime config and record change in release notes.

@@ -11,6 +11,13 @@ import { defineConfig, devices } from '@playwright/test';
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ??
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+const vercelAutomationBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const extraHTTPHeaders = vercelAutomationBypassSecret
+  ? {
+      'x-vercel-protection-bypass': vercelAutomationBypassSecret,
+      'x-vercel-set-bypass-cookie': 'true',
+    }
+  : undefined;
 
 export default defineConfig({
   testDir: './e2e',
@@ -26,6 +33,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL,
+    extraHTTPHeaders,
     /* Collect trace when retrying a failed test */
     trace: 'on-first-retry',
     /* Screenshot on failure */

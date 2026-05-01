@@ -11,8 +11,9 @@ Authentication contract (required):
 - Caller role is derived from trusted runtime config (`WORKFLOW_CALLER_ROLE`), not request body/header.
 
 Important durability note:
-- `DEAD_LETTER_DIR` must point to persistent storage in production (mounted volume, network file system, or equivalent).
-- Do not rely on ephemeral serverless filesystem for dead-letter retention.
+- Prefer `DEAD_LETTER_BACKEND=supabase` in cloud/serverless production.
+- If using `DEAD_LETTER_BACKEND=file`, `DEAD_LETTER_DIR` must point to persistent storage.
+- Do not rely on ephemeral serverless filesystem for file-backed dead-letter retention.
 
 ## 1) Recipient Mismatch Guard
 
@@ -184,3 +185,4 @@ npm run role-policy:seed -- --env staging --write .env.local
 For workflow import order, node-level credential mapping, and smoke-test procedures, use:
 
 - `docs/operations/n8n-import-checklist.md`
+- `docs/operations/supabase-dead-letter.md`
