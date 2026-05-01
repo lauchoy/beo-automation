@@ -81,6 +81,27 @@ doppler run -- npm run dev
 
 Local secrets file path: `.secrets/doppler.dev.env` (chmod `600`, gitignored).
 
+### Workflow Secrets (n8n + Composio + Supabase)
+
+Add these to `.secrets/doppler.dev.env`, then run `npm run secrets:push`:
+
+- `COMPOSIO_MULTI_EXECUTE_URL`
+- `COMPOSIO_API_KEY`
+- `NOTION_EVENT_DB_ID`
+- `CARBONE_TEMPLATE_DEFAULT_ID` (or audience-specific template IDs)
+- `WORKFLOW_INTERNAL_TOKEN`
+- `WORKFLOW_CALLER_ROLE`
+- `DEAD_LETTER_BACKEND` (`supabase` recommended for cloud)
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (when using Supabase backend)
+
+To sync workflows directly to n8n Cloud without manual import:
+
+```bash
+N8N_API_BASE_URL=https://<your-instance>.app.n8n.cloud \
+N8N_API_KEY=<your_n8n_api_key> \
+npm run workflow:sync:n8n
+```
+
 ### View BEO Templates
 
 - Kitchen BEO: http://localhost:3000/beo/kitchen

@@ -91,7 +91,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const now = new Date();\nconst timestamp = now.toISOString().replace(/[-:TZ]/g, '').slice(0, 14);\nconst runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;\nconst version = Number($json.version || 1);\nconst eventId = $json.eventId || `evt-${Date.now()}`;\n\nconst renderJobs = [\n  {\n    audience: 'kitchen',\n    templateId: process.env.CARBONE_TEMPLATE_KITCHEN_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_kitchen_${timestamp}.pdf`\n  },\n  {\n    audience: 'service',\n    templateId: process.env.CARBONE_TEMPLATE_SERVICE_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_service_${timestamp}.pdf`\n  },\n  {\n    audience: 'client',\n    templateId: process.env.CARBONE_TEMPLATE_CLIENT_ID || '',\n    filename: `${eventId}_v${String(version).padStart(2, '0')}_client_${timestamp}.pdf`\n  }\n];\n\nconst recipients = {\n  kitchen: $json.kitchenEmail,\n  service: $json.serviceEmail,\n  client: $json.clientEmail\n};\n\nreturn [{\n  json: {\n    ...$json,\n    eventId,\n    version,\n    runId,\n    renderJobs,\n    recipients\n  }\n}];"
+        "jsCode": "const now = new Date();\nconst timestamp = now.toISOString().replace(/[-:TZ]/g, '').slice(0, 14);\nconst runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);\nconst version = Number($json.version || 1);\nconst eventId = $json.eventId || ('evt-' + Date.now());\n\nconst defaultTemplateId =\n  process.env.CARBONE_TEMPLATE_DEFAULT_ID ||\n  process.env.CARBONE_TEMPLATE_KITCHEN_ID ||\n  '';\n\nconst renderJobs = [\n  {\n    audience: 'kitchen',\n    templateId: process.env.CARBONE_TEMPLATE_KITCHEN_ID || defaultTemplateId,\n    filename: eventId + '_v' + String(version).padStart(2, '0') + '_kitchen_' + timestamp + '.pdf'\n  },\n  {\n    audience: 'service',\n    templateId: process.env.CARBONE_TEMPLATE_SERVICE_ID || defaultTemplateId,\n    filename: eventId + '_v' + String(version).padStart(2, '0') + '_service_' + timestamp + '.pdf'\n  },\n  {\n    audience: 'client',\n    templateId: process.env.CARBONE_TEMPLATE_CLIENT_ID || defaultTemplateId,\n    filename: eventId + '_v' + String(version).padStart(2, '0') + '_client_' + timestamp + '.pdf'\n  }\n];\n\nconst recipients = {\n  kitchen: $json.kitchenEmail,\n  service: $json.serviceEmail,\n  client: $json.clientEmail\n};\n\nreturn [{\n  json: {\n    ...$json,\n    eventId,\n    version,\n    runId,\n    renderJobs,\n    recipients\n  }\n}];"
       },
       "id": "build-render-plan",
       "name": "Build Render Plan",
@@ -130,24 +130,20 @@
     },
     {
       "parameters": {
-        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $json.renderJobs[0].templateId}}",
+        "url": "={{$env.COMPOSIO_MULTI_EXECUTE_URL}}",
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
+        "jsonBody": "={{(() => {\n  const sessionId = $items('Init Run Context', 0, 0)[0]?.json?.sessionId || '';\n  const job = $json.renderJobs?.[0] || {};\n  return {\n    session_id: sessionId,\n    sync_response_to_workbench: false,\n    current_step: 'RENDER_KITCHEN_PDF',\n    tools: [\n      {\n        tool_slug: 'CARBONE_GENERATE_REPORT',\n        arguments: {\n          templateId: job.templateId || '',\n          data: {\n            event: $json.payload,\n            audience: 'kitchen',\n            version: $json.version\n          },\n          convertTo: 'pdf',\n          reportName: job.filename || ''\n        }\n      }\n    ]\n  };\n})()}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
-            },
-            {
-              "name": "carbone-version",
-              "value": "5"
+              "value": "={{'Bearer ' + $env.COMPOSIO_API_KEY}}"
             }
           ]
-        },
-        "jsonBody": "={{ { data: { event: $json.payload, audience: 'kitchen', version: $json.version }, convertTo: 'pdf' } }}"
+        }
       },
       "id": "render-kitchen-pdf",
       "name": "Render Kitchen PDF",
@@ -160,24 +156,20 @@
     },
     {
       "parameters": {
-        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $node['Build Render Plan'].json.renderJobs[1].templateId}}",
+        "url": "={{$env.COMPOSIO_MULTI_EXECUTE_URL}}",
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
+        "jsonBody": "={{(() => {\n  const sessionId = $items('Init Run Context', 0, 0)[0]?.json?.sessionId || '';\n  const job = $node['Build Render Plan'].json.renderJobs?.[1] || {};\n  return {\n    session_id: sessionId,\n    sync_response_to_workbench: false,\n    current_step: 'RENDER_SERVICE_PDF',\n    tools: [\n      {\n        tool_slug: 'CARBONE_GENERATE_REPORT',\n        arguments: {\n          templateId: job.templateId || '',\n          data: {\n            event: $node['Build Render Plan'].json.payload,\n            audience: 'service',\n            version: $node['Build Render Plan'].json.version\n          },\n          convertTo: 'pdf',\n          reportName: job.filename || ''\n        }\n      }\n    ]\n  };\n})()}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
-            },
-            {
-              "name": "carbone-version",
-              "value": "5"
+              "value": "={{'Bearer ' + $env.COMPOSIO_API_KEY}}"
             }
           ]
-        },
-        "jsonBody": "={{ { data: { event: $node['Build Render Plan'].json.payload, audience: 'service', version: $node['Build Render Plan'].json.version }, convertTo: 'pdf' } }}"
+        }
       },
       "id": "render-service-pdf",
       "name": "Render Service PDF",
@@ -190,24 +182,20 @@
     },
     {
       "parameters": {
-        "url": "={{($env.CARBONE_API_BASE_URL || 'https://api.carbone.io') + '/render/' + $node['Build Render Plan'].json.renderJobs[2].templateId}}",
+        "url": "={{$env.COMPOSIO_MULTI_EXECUTE_URL}}",
         "method": "POST",
         "sendBody": true,
         "contentType": "json",
+        "jsonBody": "={{(() => {\n  const sessionId = $items('Init Run Context', 0, 0)[0]?.json?.sessionId || '';\n  const job = $node['Build Render Plan'].json.renderJobs?.[2] || {};\n  return {\n    session_id: sessionId,\n    sync_response_to_workbench: false,\n    current_step: 'RENDER_CLIENT_PDF',\n    tools: [\n      {\n        tool_slug: 'CARBONE_GENERATE_REPORT',\n        arguments: {\n          templateId: job.templateId || '',\n          data: {\n            event: $node['Build Render Plan'].json.payload,\n            audience: 'client',\n            version: $node['Build Render Plan'].json.version\n          },\n          convertTo: 'pdf',\n          reportName: job.filename || ''\n        }\n      }\n    ]\n  };\n})()}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.CARBONE_API_TOKEN}}"
-            },
-            {
-              "name": "carbone-version",
-              "value": "5"
+              "value": "={{'Bearer ' + $env.COMPOSIO_API_KEY}}"
             }
           ]
-        },
-        "jsonBody": "={{ { data: { event: $node['Build Render Plan'].json.payload, audience: 'client', version: $node['Build Render Plan'].json.version }, convertTo: 'pdf' } }}"
+        }
       },
       "id": "render-client-pdf",
       "name": "Render Client PDF",
@@ -221,7 +209,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const baseCarboneUrl = process.env.CARBONE_API_BASE_URL || 'https://api.carbone.io';\nconst plan = $items('Build Render Plan', 0, 0)[0]?.json || $json;\nconst initContext = $items('Init Run Context', 0, 0)[0]?.json || {};\n\nconst kitchenRender = $items('Render Kitchen PDF', 0, 0)[0]?.json?.data?.renderId || '';\nconst serviceRender = $items('Render Service PDF', 0, 0)[0]?.json?.data?.renderId || '';\nconst clientRender = $items('Render Client PDF', 0, 0)[0]?.json?.data?.renderId || '';\n\nconst jobByAudience = Object.fromEntries((plan.renderJobs || []).map((job) => [job.audience, job]));\n\nconst toDoc = (audience, renderId) => ({\n  audience,\n  recipientEmail: plan.recipients?.[audience] || '',\n  documentUrl: `${baseCarboneUrl}/render/${renderId}?download=true`,\n  documentAudience: audience,\n  documentVersion: plan.version,\n  filename: jobByAudience[audience]?.filename || `${plan.eventId}_${audience}.pdf`\n});\n\nconst dispatches = [\n  toDoc('kitchen', kitchenRender),\n  toDoc('service', serviceRender),\n  toDoc('client', clientRender)\n].filter((entry) => entry.recipientEmail && entry.documentUrl.includes('/render/'));\n\nconst buildAudienceBody = (entry) => [\n  `Event ${plan.eventId} is ready (v${plan.version}).`,\n  `Audience: ${entry.audience}.`,\n  '',\n  `Document: ${entry.documentUrl}`,\n  '',\n  'This link is generated from Carbone and should be consumed promptly.'\n].join('\\\\n');\n\nconst sendEmailPayload = {\n  session_id: process.env.COMPOSIO_EMAIL_SESSION_ID || initContext.sessionId || '',\n  sync_response_to_workbench: false,\n  current_step: 'SEND_AUDIENCE_EMAILS',\n  tools: dispatches.map((entry) => ({\n    tool_slug: 'GMAIL_SEND_EMAIL',\n    arguments: {\n      recipient_email: entry.recipientEmail,\n      subject: `[BEO ${plan.eventId}] ${entry.audience} packet v${plan.version}`,\n      body: buildAudienceBody(entry),\n      is_html: false\n    }\n  }))\n};\n\nreturn [{\n  json: {\n    ...plan,\n    dispatches,\n    sendEmailPayload\n  }\n}];"
+        "jsCode": "const baseCarboneUrl = process.env.CARBONE_API_BASE_URL || 'https://api.carbone.io';\nconst plan = $items('Build Render Plan', 0, 0)[0]?.json || $json;\nconst initContext = $items('Init Run Context', 0, 0)[0]?.json || {};\n\nconst firstNonEmpty = (...values) => {\n  for (const value of values) {\n    if (typeof value === 'string' && value.trim()) {\n      return value.trim();\n    }\n  }\n  return '';\n};\n\nconst extractCarboneResult = (raw) => {\n  const toolResponse =\n    raw?.data?.results?.[0]?.response ||\n    raw?.results?.[0]?.response ||\n    raw?.data?.toolsOutput?.[0]?.response ||\n    raw?.data?.tools_output?.[0]?.response ||\n    {};\n\n  const payload =\n    toolResponse?.data?.data ||\n    toolResponse?.data ||\n    raw?.data ||\n    {};\n\n  const renderId = firstNonEmpty(\n    payload?.renderId,\n    payload?.render_id,\n    payload?.data?.renderId,\n    payload?.data?.render_id,\n    payload?.reportId,\n    payload?.report_id\n  );\n\n  const reportUrl = firstNonEmpty(\n    payload?.reportUrl,\n    payload?.report_url,\n    payload?.downloadUrl,\n    payload?.download_url,\n    payload?.url,\n    payload?.data?.reportUrl,\n    payload?.data?.report_url,\n    payload?.data?.downloadUrl,\n    payload?.data?.download_url,\n    payload?.data?.url\n  );\n\n  return {\n    renderId,\n    reportUrl,\n  };\n};\n\nconst kitchenRaw = $items('Render Kitchen PDF', 0, 0)[0]?.json || {};\nconst serviceRaw = $items('Render Service PDF', 0, 0)[0]?.json || {};\nconst clientRaw = $items('Render Client PDF', 0, 0)[0]?.json || {};\n\nconst kitchenResult = extractCarboneResult(kitchenRaw);\nconst serviceResult = extractCarboneResult(serviceRaw);\nconst clientResult = extractCarboneResult(clientRaw);\n\nconst jobByAudience = Object.fromEntries((plan.renderJobs || []).map((job) => [job.audience, job]));\n\nconst toDoc = (audience, renderResult) => {\n  const job = jobByAudience[audience] || {};\n  const documentUrl =\n    renderResult.reportUrl ||\n    (renderResult.renderId ? baseCarboneUrl + '/render/' + renderResult.renderId + '?download=true' : '');\n\n  return {\n    audience,\n    recipientEmail: plan.recipients?.[audience] || '',\n    documentUrl,\n    documentAudience: audience,\n    documentVersion: plan.version,\n    filename: job.filename || (plan.eventId + '_' + audience + '.pdf')\n  };\n};\n\nconst dispatches = [\n  toDoc('kitchen', kitchenResult),\n  toDoc('service', serviceResult),\n  toDoc('client', clientResult)\n].filter((entry) => entry.recipientEmail && entry.documentUrl);\n\nconst buildAudienceBody = (entry) => [\n  'Event ' + plan.eventId + ' is ready (v' + plan.version + ').',\n  'Audience: ' + entry.audience + '.',\n  '',\n  'Document: ' + entry.documentUrl,\n  '',\n  'This link is generated from Carbone via Composio and should be consumed promptly.'\n].join('\\n');\n\nconst sendEmailPayload = {\n  session_id: process.env.COMPOSIO_EMAIL_SESSION_ID || initContext.sessionId || '',\n  sync_response_to_workbench: false,\n  current_step: 'SEND_AUDIENCE_EMAILS',\n  tools: dispatches.map((entry) => ({\n    tool_slug: 'GMAIL_SEND_EMAIL',\n    arguments: {\n      recipient_email: entry.recipientEmail,\n      subject: '[BEO ' + plan.eventId + '] ' + entry.audience + ' packet v' + plan.version,\n      body: buildAudienceBody(entry),\n      is_html: false\n    }\n  }))\n};\n\nreturn [{\n  json: {\n    ...plan,\n    dispatches,\n    sendEmailPayload\n  }\n}];"
       },
       "id": "build-dispatch-payload",
       "name": "Build Dispatch Payload",

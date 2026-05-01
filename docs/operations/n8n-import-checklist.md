@@ -8,7 +8,7 @@ This runbook is for importing and safely activating:
 ## 1) Preconditions
 
 1. Next.js API is reachable from n8n at `INTERNAL_API_BASE_URL`.
-2. Dead-letter storage is persistent on the API runtime (`DEAD_LETTER_DIR`).
+2. Dead-letter storage is persistent on the API runtime (`DEAD_LETTER_BACKEND=supabase` recommended for cloud).
 3. Composio endpoint and API key are available to n8n.
 4. Role policy is set (default or seeded override via `npm run role-policy:seed`).
 5. Internal workflow token is set on API runtime (`WORKFLOW_INTERNAL_TOKEN`) and in n8n credential.
@@ -24,16 +24,22 @@ This runbook is for importing and safely activating:
 | n8n | `NOTION_STATUS_PROPERTY` | Recommended | Notion status property name (default: `Workflow Status`) |
 | n8n | `NOTION_READY_STATUS` | Recommended | Notion status value to fetch (default: `Ready to Generate`) |
 | n8n | `NOTION_READY_PAGE_SIZE` | Optional | Ready-event fetch page size (default: `100`) |
-| n8n | `CARBONE_API_BASE_URL` | Recommended | Carbone base URL (default: `https://api.carbone.io`) |
-| n8n | `CARBONE_API_TOKEN` | Yes | Carbone API token for render calls |
-| n8n | `CARBONE_TEMPLATE_KITCHEN_ID` | Yes | Carbone template ID/version for kitchen audience |
-| n8n | `CARBONE_TEMPLATE_SERVICE_ID` | Yes | Carbone template ID/version for service audience |
-| n8n | `CARBONE_TEMPLATE_CLIENT_ID` | Yes | Carbone template ID/version for client audience |
+| n8n | `CARBONE_API_BASE_URL` | Optional | Used only when workflow builds renderId-based fallback download URLs |
+| n8n | `CARBONE_TEMPLATE_DEFAULT_ID` | Recommended | Default Carbone template ID used for all audiences when audience-specific IDs are absent |
+| n8n | `CARBONE_TEMPLATE_KITCHEN_ID` | Optional | Carbone template ID override for kitchen audience |
+| n8n | `CARBONE_TEMPLATE_SERVICE_ID` | Optional | Carbone template ID override for service audience |
+| n8n | `CARBONE_TEMPLATE_CLIENT_ID` | Optional | Carbone template ID override for client audience |
 | n8n | `COMPOSIO_EMAIL_SESSION_ID` | Optional | Fixed Composio session for `GMAIL_SEND_EMAIL` calls |
 | n8n | `WORKFLOW_INTERNAL_TOKEN` | Yes | Bearer token used on all `/api/workflows/*` API calls |
 | API runtime | `WORKFLOW_INTERNAL_TOKEN` | Yes | Shared token used to authenticate internal workflow calls |
 | API runtime | `WORKFLOW_CALLER_ROLE` | Yes | Trusted caller role for workflow authorization (`system` default) |
-| API runtime | `DEAD_LETTER_DIR` | Yes | Persistent JSONL dead-letter store |
+| API runtime | `DEAD_LETTER_BACKEND` | Yes | `file` or `supabase` dead-letter backend selector |
+| API runtime | `DEAD_LETTER_DIR` | Required for `file` backend | Persistent JSONL dead-letter store |
+| API runtime | `SUPABASE_URL` | Required for `supabase` backend | Supabase project URL |
+| API runtime | `SUPABASE_SERVICE_ROLE_KEY` | Required for `supabase` backend | Supabase service-role key for dead-letter R/W |
+| API runtime | `DEAD_LETTER_MAX_DB_MB` | Optional | Prune trigger threshold (default: `470`) |
+| API runtime | `DEAD_LETTER_TARGET_DB_MB` | Optional | Post-prune target (default: `430`) |
+| API runtime | `DEAD_LETTER_MAX_DELETE_BATCH` | Optional | Max rows deleted per prune loop (default: `2000`) |
 | API runtime | `WORKFLOW_ROLE_POLICY_OVERRIDES` | Optional | Override default role policy |
 | API runtime | `TERMINAL_STATUS_WEBHOOK_URL` | Optional | Real terminal status write target |
 | API runtime | `SIMULATE_TERMINAL_STATUS_FAILURE` | Optional | Set `true` only for failure-path drills |
@@ -52,6 +58,15 @@ This runbook is for importing and safely activating:
   - Header value: `Bearer {{$env.WORKFLOW_INTERNAL_TOKEN}}`
 
 ## 4) Import Steps
+
+Preferred (no manual JSON import):
+
+1. Set `N8N_API_BASE_URL` and `N8N_API_KEY` in your shell/runtime.
+2. Run `npm run workflow:sync:n8n` from this repo.
+3. Open each workflow in n8n and confirm credentials/variables resolve.
+4. Run manual tests before enabling schedules.
+
+Manual fallback:
 
 1. In n8n, import both JSON workflow files from `workflows/n8n/`.
 2. Open each HTTP Request node and assign credentials per mapping table below.
@@ -72,9 +87,9 @@ This runbook is for importing and safely activating:
 | `Split Events` | Split In Batches | One event per batch | n/a | Iterates items | Empty input ends cleanly |
 | `Build Render Plan` | Code | Build `runId/version/renderJobs/recipients` | n/a | Emits per-event render plan | Script error fails run |
 | `Authorize Ready To Generate` | HTTP Request | `POST /api/workflows/guarded-action` (`ready_to_generate`) | `Internal Workflow API` | `200` with `authorized=true` | `401` missing/invalid token; `403` denied and written as `role_guard_blocked` dead-letter |
-| `Render Kitchen PDF` | HTTP Request | `POST {{$env.CARBONE_API_BASE_URL}}/render/{kitchenTemplateId}` | `n/a (header auth in node)` | `200` with `renderId` | `401/404/500` from Carbone |
-| `Render Service PDF` | HTTP Request | `POST {{$env.CARBONE_API_BASE_URL}}/render/{serviceTemplateId}` | `n/a (header auth in node)` | `200` with `renderId` | `401/404/500` from Carbone |
-| `Render Client PDF` | HTTP Request | `POST {{$env.CARBONE_API_BASE_URL}}/render/{clientTemplateId}` | `n/a (header auth in node)` | `200` with `renderId` | `401/404/500` from Carbone |
+| `Render Kitchen PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
+| `Render Service PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
+| `Render Client PDF` | HTTP Request | `POST {{$env.COMPOSIO_MULTI_EXECUTE_URL}}` (`CARBONE_GENERATE_REPORT`) | `Composio API` | `200` tool response with render artifact metadata | Stop run; inspect Composio auth, template ID, payload |
 | `Build Dispatch Payload` | Code | Build dispatch envelope + `GMAIL_SEND_EMAIL` multi-execute payload | n/a | Emits `dispatches` + `sendEmailPayload` | Script error fails run |
 | `Recipient Mismatch Guard` | HTTP Request | `POST /api/workflows/dispatch` | `Internal Workflow API` | `200` with `blocked=false` | `401` missing/invalid token; `409` blocked and written as `recipient_mismatch_blocked` |
 | `IF Guard Blocked` | IF | Route on `blocked` | n/a | Branches correctly | Miswired condition sends wrong branch |

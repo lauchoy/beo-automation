@@ -24,8 +24,10 @@ interface IntegrationStatus {
   id: string;
   label: string;
   requiredEnv: string[];
+  requiredEnvCount: number;
   configured: boolean;
   missingEnv: string[];
+  missingEnvCount: number;
 }
 
 interface WorkflowArtifactStatus {
@@ -344,7 +346,11 @@ export default function OperationsCommandCenter() {
                     </div>
                     {!integration.configured && (
                       <p className="mt-2 text-sm text-amber-700">
-                        Missing env: {integration.missingEnv.join(', ')}
+                        {integration.missingEnv.length > 0
+                          ? `Missing env: ${integration.missingEnv.join(', ')}`
+                          : integration.missingEnvCount > 0
+                            ? `Missing ${integration.missingEnvCount}/${integration.requiredEnvCount} env keys (hidden in production).`
+                            : 'Missing env: unavailable'}
                       </p>
                     )}
                   </div>

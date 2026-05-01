@@ -29,6 +29,13 @@ describe('dashboard overview route', () => {
       expect(Array.isArray(integration.missingEnv)).toBe(true);
       expect(integration.requiredEnv.length).toBe(0);
       expect(integration.missingEnv.length).toBe(0);
+      expect(typeof integration.requiredEnvCount).toBe('number');
+      expect(typeof integration.missingEnvCount).toBe('number');
+      expect(integration.requiredEnvCount).toBeGreaterThanOrEqual(0);
+      expect(integration.missingEnvCount).toBeGreaterThanOrEqual(0);
+      expect(integration.missingEnvCount).toBeLessThanOrEqual(
+        integration.requiredEnvCount
+      );
     }
   });
 });

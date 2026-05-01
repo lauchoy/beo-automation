@@ -12,8 +12,10 @@ type IntegrationStatus = {
   id: string;
   label: string;
   requiredEnv: string[];
+  requiredEnvCount: number;
   configured: boolean;
   missingEnv: string[];
+  missingEnvCount: number;
 };
 
 type WorkflowArtifactStatus = {
@@ -43,9 +45,38 @@ function getIntegrationStatus(
     id,
     label,
     requiredEnv,
+    requiredEnvCount: requiredEnv.length,
     configured: missingEnv.length === 0,
     missingEnv,
+    missingEnvCount: missingEnv.length,
   };
+}
+
+function getCarboneEnvRequirements(): string[] {
+  const hasAnyAudienceTemplate =
+    hasEnv('CARBONE_TEMPLATE_KITCHEN_ID') ||
+    hasEnv('CARBONE_TEMPLATE_SERVICE_ID') ||
+    hasEnv('CARBONE_TEMPLATE_CLIENT_ID') ||
+    hasEnv('CARBONE_TEMPLATE_DEFAULT_ID');
+
+  if (hasAnyAudienceTemplate) {
+    return [];
+  }
+
+  return [
+    'CARBONE_TEMPLATE_KITCHEN_ID',
+    'CARBONE_TEMPLATE_SERVICE_ID',
+    'CARBONE_TEMPLATE_CLIENT_ID',
+    'CARBONE_TEMPLATE_DEFAULT_ID',
+  ];
+}
+
+function getDeadLetterEnvRequirements(): string[] {
+  if (process.env.DEAD_LETTER_BACKEND === 'supabase') {
+    return ['DEAD_LETTER_BACKEND', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+  }
+
+  return ['DEAD_LETTER_BACKEND', 'DEAD_LETTER_DIR'];
 }
 
 function nodeNamesFromParsedWorkflow(parsed: unknown): string[] {
@@ -169,18 +200,17 @@ export async function GET() {
         'NOTION_EVENT_DB_ID',
       ]),
       getIntegrationStatus('carbone', 'Carbone Rendering', [
-        'CARBONE_API_TOKEN',
-        'CARBONE_TEMPLATE_KITCHEN_ID',
-        'CARBONE_TEMPLATE_SERVICE_ID',
-        'CARBONE_TEMPLATE_CLIENT_ID',
+        ...getCarboneEnvRequirements(),
       ]),
       getIntegrationStatus('workflow-auth', 'Internal Workflow Auth', [
         'WORKFLOW_INTERNAL_TOKEN',
         'WORKFLOW_CALLER_ROLE',
       ]),
-      getIntegrationStatus('dead-letter-store', 'Dead-Letter Store', [
-        'DEAD_LETTER_DIR',
-      ]),
+      getIntegrationStatus(
+        'dead-letter-store',
+        'Dead-Letter Store',
+        getDeadLetterEnvRequirements()
+      ),
     ];
 
     const configuredIntegrations = integrations.filter(
